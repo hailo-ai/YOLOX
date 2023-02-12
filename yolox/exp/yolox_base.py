@@ -32,7 +32,7 @@ class Exp(BaseExp):
         self.multiscale_range = 5
         # You can uncomment this line to specify a multiscale range
         # self.random_size = (14, 26)
-        self.data_dir = None
+        self.data_dir = "/data/data/coco/"
         self.train_ann = "instances_train2017.json"
         self.val_ann = "instances_val2017.json"
         self.test_ann = "instances_test2017.json"
@@ -79,6 +79,7 @@ class Exp(BaseExp):
                     m.eps = 1e-3
                     m.momentum = 0.03
 
+        import ipdb; ipdb.set_trace()
         if getattr(self, "model", None) is None:
             in_channels = [256, 512, 1024]
             backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act)

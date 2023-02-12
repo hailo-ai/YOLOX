@@ -137,7 +137,7 @@ def main(exp, args, num_gpu):
         exp.nmsthre = args.nms
     if args.tsize is not None:
         exp.test_size = (args.tsize, args.tsize)
-
+    import ipdb; ipdb.set_trace()
     model = exp.get_model()
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
@@ -190,7 +190,9 @@ def main(exp, args, num_gpu):
 
 
 if __name__ == "__main__":
+    import ipdb; ipdb.set_trace()
     args = make_parser().parse_args()
+    import ipdb; ipdb.set_trace()
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
 
