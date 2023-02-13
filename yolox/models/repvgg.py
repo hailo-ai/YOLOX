@@ -185,17 +185,32 @@ class RepVGG(nn.Module):
             self.cur_layer_idx += 1
         return nn.Sequential(*blocks)
 
-    
+    '''
+    # org forward
     def forward(self, x):
         import ipdb; ipdb.set_trace()
-        out = self.stage0(x)        # out = [batch, 48, 128, 64]
-        out = self.stage1(out)      # out = [batch, 48, 64, 32]
-        out = self.stage2(out)      # out = [batch, 96, 32, 16]
-        out = self.stage3(out)      # out = [batch, 196, 16, 8]
-        out = self.stage4(out)      # out = [batch, 1280, 8, 4]
+                                    # x = [batch, 3, 640, 640]
+        out = self.stage0(x)        # out = [batch, 64, 320, 320]
+        out = self.stage1(out)      # out = [batch, 64, 160, 160]
+        out = self.stage2(out)      # out = [batch, 128, 80, 80]
+        out = self.stage3(out)      # out = [batch, 128, 40, 40]
+        out = self.stage4(out)      # out = [batch, 256, 20, 20]
         out = out.view(out.size(0), -1)
 
         return out
+    '''
+    
+    def forward(self, x):
+        import ipdb; ipdb.set_trace()
+        x = self.stage0(x)
+        output = []
+        for i in range(1, 5):
+            stage = getattr(self, "stage{}".format(i))
+            x = stage(x)
+            if i > 1:
+                output.append(x)
+        import ipdb; ipdb.set_trace()
+        return tuple(output)
 
 
 optional_groupwise_layers = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26]
