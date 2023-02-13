@@ -205,7 +205,6 @@ class RepVGG(nn.Module):
     '''
     
     def forward(self, x):
-        import ipdb; ipdb.set_trace()
         x = self.stage0(x)
         output = []
         for i in range(1, 5):

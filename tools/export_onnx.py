@@ -64,6 +64,7 @@ def main():
         args.experiment_name = exp.exp_name
 
     model = exp.get_model()
+    import ipdb; ipdb.set_trace()
     if args.ckpt is None:
         file_name = os.path.join(exp.output_dir, args.experiment_name)
         ckpt_file = os.path.join(file_name, "best_ckpt.pth")
