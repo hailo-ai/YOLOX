@@ -65,6 +65,14 @@ def main():
 
     model = exp.get_model()
     import ipdb; ipdb.set_trace()
+    
+    # if model is repvgg we need to deploy it
+    if hasattr(model.backbone, 'deploy'):
+        from yolox.models.repvgg import repvgg_model_convert
+        backbone_deploy = repvgg_model_convert(model.backbone)
+        model.backbone = backbone_deploy
+
+
     if args.ckpt is None:
         file_name = os.path.join(exp.output_dir, args.experiment_name)
         ckpt_file = os.path.join(file_name, "best_ckpt.pth")
