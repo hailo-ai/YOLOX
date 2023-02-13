@@ -16,8 +16,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ..module.conv import ConvModule
-from ..module.init_weights import xavier_init
+from .conv import ConvModule
+from .init_weights import xavier_init
 
 
 class FPN(nn.Module):

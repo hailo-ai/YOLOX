@@ -6,6 +6,7 @@ import copy
 import os
 from .se_block import SEBlock
 import gdown
+from .fpn import build_fpn
 
 
 pretrained_urls = {
@@ -152,7 +153,7 @@ class RepVGGBlock(nn.Module):
 
 class RepVGG(nn.Module):
 
-    def __init__(self, num_blocks, width_multiplier=None, override_groups_map=None, deploy=False, use_se=False, last_channel=256):
+    def __init__(self, num_blocks, width_multiplier=None, override_groups_map=None, deploy=False, use_se=False, last_channel=256, fpn_cfg=None):
         super(RepVGG, self).__init__()
 
         assert len(width_multiplier) == 4
@@ -173,6 +174,9 @@ class RepVGG(nn.Module):
         out_planes = last_channel if last_channel else int(512 * width_multiplier[3])
         self.stage4 = self._make_stage(out_planes, num_blocks[3], stride=2)
         #self.stage4 = self._make_stage(int(512 * width_multiplier[3]), num_blocks[3], stride=2) # org
+
+        if fpn_cfg is not None:
+            self.fpn = build_fpn(fpn_cfg)
 
     def _make_stage(self, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -209,8 +213,10 @@ class RepVGG(nn.Module):
             x = stage(x)
             if i > 1:
                 output.append(x)
-        import ipdb; ipdb.set_trace()
-        return tuple(output)
+        
+        if hasattr(self, 'fpn'):
+            output = self.fpn(output) # output = [batch, 128, 80, 80], [batch, 128, 40, 40], [batch, 128, 20, 20]
+        return output
 
 
 optional_groupwise_layers = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26]
@@ -314,9 +320,9 @@ def create_RepVGG_A11(deploy=False):
                   width_multiplier=[1, 1, 0.75, 2.5], override_groups_map=None, deploy=deploy)
 
 # [128,128,256]
-def create_RepVGG_A12(deploy=False):
+def create_RepVGG_A12(fpn_cfg,deploy=False):
     return RepVGG(num_blocks=[2, 4, 14, 1],
-                  width_multiplier=[1, 1, 0.5, 2.5], override_groups_map=None, deploy=deploy)
+                  width_multiplier=[1, 1, 0.5, 2.5], override_groups_map=None, deploy=deploy, fpn_cfg=fpn_cfg)
 
 
 func_dict = {

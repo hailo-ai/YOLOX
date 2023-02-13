@@ -6,7 +6,7 @@ import os
 
 from yolox.exp import Exp as MyExp
 from yolox.models.repvgg import create_RepVGG_A12
-
+from yacs.config import CfgNode
 
 class Exp(MyExp):
     def __init__(self):
@@ -18,9 +18,18 @@ class Exp(MyExp):
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
+        cfg = dict(
+            name="PAN",
+            in_channels=[128, 128, 256],
+            out_channels=128,
+            start_level=0,
+            num_outs=3,
+        )
+        fpn_cfg = CfgNode(cfg)
+
         import ipdb; ipdb.set_trace()
         in_channels = [128, 128, 256]
-        backbone = create_RepVGG_A12()
+        backbone = create_RepVGG_A12(fpn_cfg)
         head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
         self.model = YOLOX(backbone, head)
 
