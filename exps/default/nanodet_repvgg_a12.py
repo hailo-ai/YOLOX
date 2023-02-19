@@ -5,7 +5,7 @@
 import os
 
 from yolox.exp import Exp as MyExp
-from yolox.models.repvgg import create_RepVGG_A12
+from yolox.models.nanodet_repvgg import create_RepVGG_A12
 from yacs.config import CfgNode
 
 class Exp(MyExp):
