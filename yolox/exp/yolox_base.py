@@ -9,6 +9,8 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 
+from yolox.models.yolov6_fpn import YOLOv6FPN
+
 from .base_exp import BaseExp
 
 
@@ -32,7 +34,7 @@ class Exp(BaseExp):
         self.multiscale_range = 5
         # You can uncomment this line to specify a multiscale range
         # self.random_size = (14, 26)
-        self.data_dir = None
+        self.data_dir = "/data/data/coco/"
         self.train_ann = "instances_train2017.json"
         self.val_ann = "instances_val2017.json"
         self.test_ann = "instances_test2017.json"
@@ -78,8 +80,14 @@ class Exp(BaseExp):
                 if isinstance(m, nn.BatchNorm2d):
                     m.eps = 1e-3
                     m.momentum = 0.03
-
         if getattr(self, "model", None) is None:
+            # if self.exp_name == 'yolov6n':
+            #     in_channels = [64, 128, 256]  # [256, 512, 1024]  # [32, 64, 128]
+            #     width = 0.5
+            #     backbone = YOLOv6FPN(self.depth, self.width, act=self.act)
+            #     head = YOLOXHead(self.num_classes, width, in_channels=in_channels, act=self.act)
+            #     self.model = YOLOX(backbone, head)
+            # else:
             in_channels = [256, 512, 1024]
             backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act)
             head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
