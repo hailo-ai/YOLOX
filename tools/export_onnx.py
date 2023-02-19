@@ -64,7 +64,6 @@ def main():
         args.experiment_name = exp.exp_name
 
     model = exp.get_model()
-
     if args.ckpt is None:
         file_name = os.path.join(exp.output_dir, args.experiment_name)
         ckpt_file = os.path.join(file_name, "best_ckpt.pth")
@@ -84,11 +83,6 @@ def main():
         if hasattr(module, 'switch_to_deploy'):
             module.switch_to_deploy()
     model.head.decode_in_inference = False
-
-    # if model is repvgg we need to deploy it
-    for module in model.modules():
-        if hasattr(module, 'switch_to_deploy'):
-            module.switch_to_deploy()
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
