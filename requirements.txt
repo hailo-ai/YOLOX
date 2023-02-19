@@ -11,6 +11,7 @@ thop==0.1.1.post2209072238
 ninja==1.10.2.3
 tabulate==0.8.9
 tensorboard==2.6.0
+yacs==0.1.8
 
 # verified versions
 # pycocotools corresponds to https://github.com/ppwwyyxx/cocoapi
