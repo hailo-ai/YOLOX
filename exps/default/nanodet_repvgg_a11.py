@@ -18,7 +18,6 @@ class Exp(MyExp):
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
-        import ipdb; ipdb.set_trace()
         in_channels = [128, 192, 256]
         backbone = create_RepVGG_A11()
         head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
