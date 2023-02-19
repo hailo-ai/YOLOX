@@ -64,32 +64,27 @@ def main():
         args.experiment_name = exp.exp_name
 
     model = exp.get_model()
-    import ipdb; ipdb.set_trace()
     
-    # if model is repvgg we need to deploy it
-    if hasattr(model.backbone, 'deploy'):
-        from yolox.models.repvgg import repvgg_model_convert
-        backbone_deploy = repvgg_model_convert(model.backbone)
-        model.backbone = backbone_deploy
-
-
     if args.ckpt is None:
         file_name = os.path.join(exp.output_dir, args.experiment_name)
         ckpt_file = os.path.join(file_name, "best_ckpt.pth")
     else:
         ckpt_file = args.ckpt
 
-    import ipdb; ipdb.set_trace()
-
     # load the model state dict
-    #ckpt = torch.load(ckpt_file, map_location="cpu")
+    ckpt = torch.load(ckpt_file, map_location="cpu")
 
     model.eval()
-    #if "model" in ckpt:
-    #    ckpt = ckpt["model"]
-    #model.load_state_dict(ckpt)
+    if "model" in ckpt:
+        ckpt = ckpt["model"]
+    model.load_state_dict(ckpt)
     model = replace_module(model, nn.SiLU, SiLU)
     model.head.decode_in_inference = False
+
+    # if model is repvgg we need to deploy it
+    for module in model.modules():
+        if hasattr(module, 'switch_to_deploy'):
+            module.switch_to_deploy()
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])

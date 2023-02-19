@@ -14,7 +14,14 @@ class Exp(MyExp):
         self.depth = 0.33
         self.width = 0.50
         self.act = 'relu'
-        #self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+
+        self.print_interval = 100
+        self.eval_interval = 4
+
+        self.basic_lr_per_img = 0.02 / 64.0
+        self.mosaic_scale = (0.5, 1.5)
+        self.mosaic_prob = 0.5
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
