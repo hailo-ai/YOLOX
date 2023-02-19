@@ -15,9 +15,7 @@
 import copy
 
 from .fpn import FPN
-#from .ghost_pan import GhostPAN
 from .pan import PAN
-#from .tan import TAN
 
 
 def build_fpn(cfg):
