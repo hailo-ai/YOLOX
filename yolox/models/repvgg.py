@@ -173,7 +173,6 @@ class RepVGG(nn.Module):
         self.stage3 = self._make_stage(int(256 * width_multiplier[2]), num_blocks[2], stride=2)
         out_planes = last_channel if last_channel else int(512 * width_multiplier[3])
         self.stage4 = self._make_stage(out_planes, num_blocks[3], stride=2)
-        #self.stage4 = self._make_stage(int(512 * width_multiplier[3]), num_blocks[3], stride=2) # org
 
         if fpn_cfg is not None:
             self.fpn = build_fpn(fpn_cfg)
@@ -189,20 +188,6 @@ class RepVGG(nn.Module):
             self.cur_layer_idx += 1
         return nn.Sequential(*blocks)
 
-    '''
-    # org forward
-    def forward(self, x):
-        import ipdb; ipdb.set_trace()
-                                    # x = [batch, 3, 640, 640]
-        out = self.stage0(x)        # out = [batch, 64, 320, 320]
-        out = self.stage1(out)      # out = [batch, 64, 160, 160]
-        out = self.stage2(out)      # out = [batch, 128, 80, 80]
-        out = self.stage3(out)      # out = [batch, 128, 40, 40]
-        out = self.stage4(out)      # out = [batch, 256, 20, 20]
-        out = out.view(out.size(0), -1)
-
-        return out
-    '''
     
     def forward(self, x):
         x = self.stage0(x)
