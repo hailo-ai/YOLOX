@@ -32,12 +32,6 @@ class RepVGGBlock(nn.Module):
 
         self.nonlinearity = nn.ReLU()
 
-        # if use_se:
-        #     #   Note that RepVGG-D2se uses SE before nonlinearity. But RepVGGplus models uses SE after nonlinearity.
-        #     self.se = SEBlock(out_channels, internal_neurons=out_channels // 16)
-        # else:
-        #     self.se = nn.Identity()
-
         if deploy:
             self.rbr_reparam = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride,
                                          padding=padding, dilation=dilation, groups=groups, bias=True, padding_mode=padding_mode)
@@ -157,7 +151,6 @@ class RepVGG(nn.Module):
         self.use_se = use_se
         self.use_checkpoint = use_checkpoint
 
-        # self.in_planes = min(64, int(64 * width_multiplier[0]))
         self.in_planes = 16
         self.stage0 = RepVGGBlock(in_channels=3, out_channels=self.in_planes, kernel_size=3, stride=2, padding=1, deploy=self.deploy, use_se=self.use_se)
         self.cur_layer_idx = 1
@@ -165,9 +158,6 @@ class RepVGG(nn.Module):
         self.stage2 = self._make_stage(int(256 * width_multiplier[1]), num_blocks[1], stride=2)
         self.stage3 = self._make_stage(int(512 * width_multiplier[2]), num_blocks[2], stride=2)
         self.stage4 = self._make_stage(int(1024 * width_multiplier[3]), num_blocks[3], stride=2)
-
-        # self.gap = nn.AdaptiveAvgPool2d(output_size=1)
-        # self.linear = nn.Linear(int(512 * width_multiplier[3]), num_classes)
 
     def _make_stage(self, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)

@@ -1,12 +1,10 @@
-# Hailo #
 
 import torch.nn as nn
-import numpy as np
 import torch
 from .repvgg import RepVGGBlock
 
 
-class ConvBNAct(nn.Module):  # TODO: Amit -- can replace with `BaseConv` by YOLOX
+class ConvBNAct(nn.Module):
     '''Conv2d + BN + Activation (ReLU)'''
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, groups=1, bias=False):
         super().__init__()

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-# Copyright (c) Hailo Inc. All rights reserved. TODO: Amit -- is that OK?
 
 import torch
 import torch.nn as nn
