@@ -9,8 +9,6 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 
-from yolox.models.yolov6_fpn import YOLOv6FPN
-
 from .base_exp import BaseExp
 
 
@@ -80,6 +78,7 @@ class Exp(BaseExp):
                 if isinstance(m, nn.BatchNorm2d):
                     m.eps = 1e-3
                     m.momentum = 0.03
+
         if getattr(self, "model", None) is None:
             in_channels = [256, 512, 1024]
             backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act)
