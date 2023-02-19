@@ -6,7 +6,7 @@ import os
 
 from yolox.exp import Exp as MyExp
 from yolox.models.nanodet_repvgg import create_RepVGG_A11
-
+from yacs.config import CfgNode
 
 class Exp(MyExp):
     def __init__(self):
@@ -18,8 +18,17 @@ class Exp(MyExp):
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
-        in_channels = [128, 192, 256]
-        backbone = create_RepVGG_A11()
+        cfg = dict(
+            name="PAN",
+            in_channels=[128, 192, 256],
+            out_channels=128,
+            start_level=0,
+            num_outs=3,
+        )
+        fpn_cfg = CfgNode(cfg)
+
+        in_channels = [256, 256, 256]
+        backbone = create_RepVGG_A11(fpn_cfg)
         head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
         self.model = YOLOX(backbone, head)
 
