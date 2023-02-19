@@ -303,11 +303,6 @@ def create_RepVGG_D2se(deploy=False):
     return RepVGG(num_blocks=[8, 14, 24, 1], num_classes=1000,
                   width_multiplier=[2.5, 2.5, 2.5, 5], override_groups_map=None, deploy=deploy, use_se=True)
 
-# 1 less in the middle and 192 channels
-def create_RepVGG_A11(deploy=False):
-    return RepVGG(num_blocks=[2, 4, 13, 1],
-                  width_multiplier=[1, 1, 0.75, 2.5], override_groups_map=None, deploy=deploy)
-
 # [128,128,256]
 def create_RepVGG_A12(fpn_cfg,deploy=False):
     return RepVGG(num_blocks=[2, 4, 14, 1],
@@ -316,7 +311,6 @@ def create_RepVGG_A12(fpn_cfg,deploy=False):
 
 func_dict = {
 'RepVGG-A0': create_RepVGG_A0,
-'RepVGG-A11': create_RepVGG_A11,
 'RepVGG-A12': create_RepVGG_A12,
 'RepVGG-A1': create_RepVGG_A1,
 'RepVGG-A2': create_RepVGG_A2,
