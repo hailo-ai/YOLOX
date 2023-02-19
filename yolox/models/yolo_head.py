@@ -47,7 +47,7 @@ class YOLOXHead(nn.Module):
         for i in range(len(in_channels)):
             self.stems.append(
                 BaseConv(
-                    in_channels=int(in_channels[i] * width), # coming with [128, 128, 128] output of FPN/PAN
+                    in_channels=int(in_channels[i] * width),
                     out_channels=int(256 * width),
                     ksize=1,
                     stride=1,
@@ -146,15 +146,16 @@ class YOLOXHead(nn.Module):
         x_shifts = []
         y_shifts = []
         expanded_strides = []
+
         for k, (cls_conv, reg_conv, stride_this_level, x) in enumerate(
             zip(self.cls_convs, self.reg_convs, self.strides, xin)
         ):
-            x = self.stems[k](x) # conv49
+            x = self.stems[k](x)
             cls_x = x
             reg_x = x
 
-            cls_feat = cls_conv(cls_x)                # conv52 + conv50
-            cls_output = self.cls_preds[k](cls_feat)  # conv54
+            cls_feat = cls_conv(cls_x)
+            cls_output = self.cls_preds[k](cls_feat)
 
             reg_feat = reg_conv(reg_x)
             reg_output = self.reg_preds[k](reg_feat)

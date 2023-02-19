@@ -5,7 +5,7 @@
 import os
 
 from yolox.exp import Exp as MyExp
-from yolox.models.repvgg import create_RepVGG_A11
+from yolox.models.nanodet_repvgg import create_RepVGG_A11
 
 
 class Exp(MyExp):
