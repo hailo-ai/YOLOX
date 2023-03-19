@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from yolox.exp import Exp as MyExp
 from yolox.models.yolov6_fpn import YOLOv6FPN
-
+from yolox.models.effidehead import Yolov6Head, build_effidehead_layer
 
 class Exp(MyExp):
     def __init__(self):
@@ -36,25 +36,18 @@ class Exp(MyExp):
         self.act = 'relu'
         self.output_dir = './yolov6n_outputs_coco'
         self.print_interval = 50
-        self.eval_interval = 5
+        self.eval_interval = 2
         self.max_epoch = 300
         self.data_num_workers = 6
-        self.basic_lr_per_img = 0.03 / 64.0    # 0.03 / 64.0  # 0.0005 / 64
+        self.basic_lr_per_img = 0.03 / 64.0    # 0.03 / 64.0  # 0.0005 / 64 
         # self.no_aug_epochs = 50
         # self.warmup_epochs = 0
 
         # self.data_dir = '/fastdata/users/COCO'
         self.data_dir = '/fastdata/users/coco_pana'
-        # self.num_classes = 1
         self.train_ann = "coco_pana_val.json"
         self.val_ann = "coco_pana_val.json"
         self.test_ann = "coco_pana_val.json"
-        # self.name = "images"
-
-        # self.data_dir = '/data/data/datasets/kitti_2d_object_detection'
-        # self.train_ann = "train_kitti2d_1cls.json"
-        # self.val_ann = "val_kitti2d_1cls.json"
-        # self.name = "images/train"
 
 
     def get_model(self, sublinear=False):
@@ -69,8 +62,11 @@ class Exp(MyExp):
             from yolox.models import YOLOX, YOLOXHead
             in_channels = [64, 128, 256]
             width = 0.5
+            num_anchors = 1
+            head_channels_list = [32, 64, 128]
             backbone = YOLOv6FPN(self.depth, self.width, act=self.act)
-            head = YOLOXHead(self.num_classes, width, in_channels=in_channels, act=self.act)
+            head_layers = build_effidehead_layer(head_channels_list, num_anchors, self.num_classes)
+            head = Yolov6Head(self.num_classes, num_anchors, len(head_channels_list), head_layers=head_layers)
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)

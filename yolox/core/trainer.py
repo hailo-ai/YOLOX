@@ -168,7 +168,6 @@ class Trainer:
 
         self.model = model
         self.model.train()
-
         self.evaluator = self.exp.get_evaluator(
             batch_size=self.args.batch_size, is_distributed=self.is_distributed
         )
@@ -226,9 +225,10 @@ class Trainer:
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
-            loss_str = ", ".join(
-                ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
-            )
+            # loss_str = ", ".join(
+            #     ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
+            # )
+            loss_str = '0000000'  # TODO: AMIT -- Remove this
 
             time_meter = self.meter.get_filtered_meter("time")
             time_str = ", ".join(
@@ -289,6 +289,13 @@ class Trainer:
                 ckpt_file = self.args.ckpt
                 ckpt = torch.load(ckpt_file, map_location=self.device)["model"]
                 model = load_ckpt(model, ckpt)
+
+                # Freeze backbone / neck / head
+                if self.args.freeze_backbone:
+                    for name, param in model.named_parameters():
+                        if name.startswith('backbone.backbone.'):
+                            param.requires_grad = False
+
             self.start_epoch = 0
 
         return model

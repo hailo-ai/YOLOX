@@ -26,6 +26,8 @@ from yolox.utils import (
     xyxy2xywh
 )
 
+KITTI_CLASSES = ["Pedestrian"]
+
 
 def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
     per_class_AR = {}

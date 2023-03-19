@@ -44,6 +44,8 @@ def make_parser():
     parser.add_argument(
         "--resume", default=False, action="store_true", help="resume training"
     )
+    parser.add_argument("-frzbb", "--freeze_backbone", default=False,
+                        action="store_true", help="freeze model backbone")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
     parser.add_argument(
         "-e",

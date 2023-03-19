@@ -2,37 +2,8 @@
 import torch.nn as nn
 import torch
 from .repvgg import RepVGGBlock
+from .common import ConvBNAct, Transpose
 
-
-class ConvBNAct(nn.Module):
-    '''Conv2d + BN + Activation (ReLU)'''
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, groups=1, bias=False):
-        super().__init__()
-        padding = kernel_size // 2
-        self.conv = nn.Conv2d(
-            in_channels,
-            out_channels,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=padding,
-            groups=groups,
-            bias=bias,
-        )
-        self.bn = nn.BatchNorm2d(out_channels)
-        self.act = nn.ReLU()
-
-    def forward(self, x):
-        return self.act(self.bn(self.conv(x)))
-
-
-class Transpose(nn.Module):
-    def __init__(self, scale_factor=2):
-        super().__init__()
-        self.upsample_transpose = torch.nn.UpsamplingNearest2d(scale_factor=scale_factor)
-        # self.upsample_transpose = torch.nn.UpsamplingBilinear2d(scale_factor=scale_factor)
-
-    def forward(self, x):
-        return self.upsample_transpose(x)
 
 
 def make_repvgg_stage(in_channels, out_channels, num_blocks, stride=1, deploy=False):

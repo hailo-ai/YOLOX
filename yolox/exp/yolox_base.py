@@ -64,6 +64,7 @@ class Exp(BaseExp):
         self.print_interval = 10
         self.eval_interval = 10
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.name = 'train2017'
 
         # -----------------  testing config ------------------ #
         self.test_size = (640, 640)
@@ -112,6 +113,7 @@ class Exp(BaseExp):
             dataset = COCODataset(
                 data_dir=self.data_dir,
                 json_file=self.train_ann,
+                name=self.name,
                 img_size=self.input_size,
                 preproc=TrainTransform(
                     max_labels=50,
@@ -245,6 +247,7 @@ class Exp(BaseExp):
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
+            # name="images" if not testdev else "test2017",
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )
