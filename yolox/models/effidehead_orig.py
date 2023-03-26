@@ -2,8 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+# from yolov6.layers.common import *
+# from yolov6.assigners.anchor_generator import generate_anchors
+# from yolov6.utils.general import dist2bbox
 from .common import ConvBNAct, dist2bbox, generate_anchors
-from yolox.models.losses import ComputeLoss
 
 '''
 Default configuration for head:
@@ -31,10 +33,15 @@ class Yolov6Head(nn.Module):
                  num_layers=3,
                  inplace=True,
                  head_layers=None,
-                 input_size=(640, 640),
-                 iou_type='siou',
-                 use_dfl=False,  # TODO: Amit -- Delete this variable
-                 reg_max=0):  # detection layer. # TODO: Amit -- Delete this variable
+                 use_dfl=False,
+                 reg_max=0):  # detection layer
+    #     self,
+    #     num_classes,
+    #     width=1.0,
+    #     strides=[8, 16, 32],
+    #     in_channels=[256, 512, 1024],
+    #     act="silu",
+    #     depthwise=False,
 
         super().__init__()
         assert head_layers is not None
@@ -56,10 +63,6 @@ class Yolov6Head(nn.Module):
         self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
         self.grid_cell_offset = 0.5
         self.grid_cell_size = 5.0
-        self.compute_loss = ComputeLoss(num_classes=num_classes,
-                                        input_size=input_size,
-                                        # reg_max=0,  # AMIT TODO: Delete this variable
-                                        iou_type=iou_type)
 
         # Init decouple head
         self.stems = nn.ModuleList()
@@ -100,13 +103,6 @@ class Yolov6Head(nn.Module):
                                                    requires_grad=False)
 
     def forward(self, x, labels=None, imgs=None):
-        '''
-        Args: x - input images batch, after preprocess
-              labels - labels batch, after preprocess
-
-        output: if training, returns losses
-                else (eval), returns evaluation
-        '''
         x = list(x)
         if self.training:
             cls_score_list = []
@@ -125,16 +121,19 @@ class Yolov6Head(nn.Module):
                 cls_score_list.append(cls_output.flatten(2).permute((0, 2, 1)))
                 reg_distri_list.append(reg_output.flatten(2).permute((0, 2, 1)))
 
-            cls_score = torch.cat(cls_score_list, axis=1)
-            reg_distri = torch.cat(reg_distri_list, axis=1)
-            preds = [x, cls_score, reg_distri]
-            total_loss, loss_items = self.compute_loss(preds, labels)
-            iou_loss = loss_items[0]
-            cls_loss = loss_items[2]
-            conf_loss = torch.tensor(0.0, dtype=torch.float64, requires_grad=False).to(iou_loss.device)
-            l1_loss = 0.0
-            num_fg = 1.0
-            return total_loss, iou_loss, conf_loss, cls_loss, l1_loss, num_fg
+            cls_score_list = torch.cat(cls_score_list, axis=1)
+            reg_distri_list = torch.cat(reg_distri_list, axis=1)
+
+            # loss = torch.tensor([26.4065], requires_grad=True)
+            # iou_loss = torch.tensor([4.7327], requires_grad=True)
+            # conf_loss = torch.tensor([19.7182], requires_grad=True)
+            # cls_loss = torch.tensor([1.9557], requires_grad=True)
+            # l1_loss = torch.tensor([0.0], requires_grad=True)
+            # num_fg = 1.1578947368421053
+            total_loss, loss_items = self.compute_loss(preds, targets, epoch_num, step_num)
+            # return loss, iou_loss, conf_loss, cls_loss, l1_loss, num_fg
+            # return x, cls_score_list, reg_distri_list
+            # In YOLOX we want to return: loss, iou_loss, conf_loss, cls_loss, l1_loss, num_fg
         else:
             cls_score_list = []
             reg_dist_list = []

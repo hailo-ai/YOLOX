@@ -215,7 +215,7 @@ class Trainer:
             * reset setting of resize
         """
         # log needed information
-        if (self.iter + 1) % self.exp.print_interval == 0:
+        if (self.iter + 1) % self.exp.print_interval == 0 or (self.iter + 1) == self.max_iter:
             # TODO check ETA logic
             left_iters = self.max_iter * self.max_epoch - (self.progress_in_iter + 1)
             eta_seconds = self.meter["iter_time"].global_avg * left_iters
@@ -225,10 +225,9 @@ class Trainer:
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
-            # loss_str = ", ".join(
-            #     ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
-            # )
-            loss_str = '0000000'  # TODO: AMIT -- Remove this
+            loss_str = ", ".join(
+                ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
+            )
 
             time_meter = self.meter.get_filtered_meter("time")
             time_str = ", ".join(

@@ -46,6 +46,15 @@ def dist2bbox(distance, anchor_points, box_format='xyxy'):
     return bbox
 
 
+def xywh2xyxy(bboxes):
+    '''Transform bbox(xywh) to box(xyxy).'''
+    bboxes[..., 0] = bboxes[..., 0] - bboxes[..., 2] * 0.5
+    bboxes[..., 1] = bboxes[..., 1] - bboxes[..., 3] * 0.5
+    bboxes[..., 2] = bboxes[..., 0] + bboxes[..., 2]
+    bboxes[..., 3] = bboxes[..., 1] + bboxes[..., 3]
+    return bboxes
+
+
 def generate_anchors(feats, fpn_strides, grid_cell_size=5.0, grid_cell_offset=0.5,  device='cpu', is_eval=False):
     '''Generate anchors from features.'''
     anchors = []
