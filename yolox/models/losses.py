@@ -168,7 +168,7 @@ class ComputeLoss:
                  grid_cell_size=5.0,
                  grid_cell_offset=0.5,
                  num_classes=80,
-                 input_size=(640, 640),  # TODO: Amit - Need to add support in tuple
+                 input_size=(640, 640),  # (height, width)
                  warmup_epoch=4,
                  reg_max=0,  # 16
                  iou_type='giou',
@@ -210,13 +210,14 @@ class ComputeLoss:
         if isinstance(self.input_size, int):
             gt_bboxes_scale = torch.full((1, 4), self.input_size).type_as(pred_scores)
         else:  # Tuple input_size
-            gt_bboxes_scale = torch.tensor(self.input_size * 2).view(1, 4).type_as(pred_scores)
+            WH_shape = tuple(reversed(self.input_size))
+            gt_bboxes_scale = torch.tensor(WH_shape * 2).view(1, 4).type_as(pred_scores)
         batch_size = pred_scores.shape[0]
 
         # Normalize targets bbox (xywh):
         # targets[:, :, 1:] = targets[:, :, 1:] / 640.0
-        # targets[:, :, 1::2] = targets[:, :, 1::2] / self.input_size[0]  # normalize (xw) by W
-        # targets[:, :, 2::2] = targets[:, :, 2::2] / self.input_size[1]  # normalize (yh) by H
+        # targets[:, :, 1::2] = targets[:, :, 1::2] / self.input_size[1]  # normalize (xw) by W
+        # targets[:, :, 2::2] = targets[:, :, 2::2] / self.input_size[0]  # normalize (yh) by H
         targets[:, :, 1:] /= gt_bboxes_scale
         # targets
         targets = self._preprocess(targets, batch_size, gt_bboxes_scale)

@@ -31,7 +31,7 @@ class Yolov6Head(nn.Module):
                  num_layers=3,
                  inplace=True,
                  head_layers=None,
-                 input_size=(640, 640),
+                 input_size=(640, 640),  # (height, width)
                  iou_type='siou',
                  use_dfl=False,  # TODO: Amit -- Delete this variable
                  reg_max=0):  # detection layer. # TODO: Amit -- Delete this variable

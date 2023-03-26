@@ -14,8 +14,8 @@ class Exp(MyExp):
         super(Exp, self).__init__()
         self.depth = 0.33
         self.width = 0.25
-        self.input_size = (640, 480)  # WxH
-        self.test_size = (640, 480)  # WxH
+        self.input_size = (480, 640)  # (height, width)
+        self.test_size = (480, 640)  # (height, width)
         self.random_size = (10, 20)
         self.mosaic_scale = (0.5, 1.5)
         self.mosaic_prob = 0.5
