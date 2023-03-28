@@ -17,11 +17,16 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         self.print_interval = 100
-        self.eval_interval = 4
+        self.eval_interval = 10
 
         self.basic_lr_per_img = 0.02 / 64.0
         self.mosaic_scale = (0.5, 1.5)
         self.mosaic_prob = 0.5
+
+        self.input_size = (480, 640)  # (height, width)
+        self.test_size = (480, 640)  # (height, width)
+        self.output_dir = './nanodet_outputs_coco'
+        self.data_dir = '/fastdata/users/COCO'
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
