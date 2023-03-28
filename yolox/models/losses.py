@@ -160,7 +160,7 @@ class IOUlossYolov6:
         return loss
 
 
-class ComputeLoss:
+class CalculateLoss:
     '''Loss computation func.'''
 
     def __init__(self,

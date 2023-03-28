@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from .common import ConvBNAct, dist2bbox, generate_anchors
-from yolox.models.losses import ComputeLoss
+from yolox.models.losses import CalculateLoss
 
 '''
 Default configuration for head:
@@ -56,7 +56,7 @@ class Yolov6Head(nn.Module):
         self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
         self.grid_cell_offset = 0.5
         self.grid_cell_size = 5.0
-        self.compute_loss = ComputeLoss(num_classes=num_classes,
+        self.compute_loss = CalculateLoss(num_classes=num_classes,
                                         input_size=input_size,
                                         # reg_max=0,  # AMIT TODO: Delete this variable
                                         iou_type=iou_type)
