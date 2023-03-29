@@ -30,6 +30,7 @@ class Exp(MyExp):
         self.output_dir = './nanodet_outputs_coco'
         self.data_dir = '/fastdata/users/COCO'
 
+
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
