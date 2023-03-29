@@ -28,7 +28,7 @@ class Exp(MyExp):
         self.input_size = (480, 640)  # (height, width)
         self.test_size = (480, 640)  # (height, width)
         self.output_dir = './nanodet_outputs_coco'
-        self.data_dir = '/fastdata/users/COCO'
+        self.data_dir = '/fastdata/users/coco'
         # self.data_dir = '/fastdata/users/coco_pana'
         # self.train_ann = "coco_pana_val.json"
         # self.val_ann = "coco_pana_val.json"
@@ -38,7 +38,7 @@ class Exp(MyExp):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
 
         cfg = dict(
-            name="PAN",
+            name="PAN_conv1x1down",
             in_channels=[128, 128, 256],
             out_channels=128,
             start_level=0,

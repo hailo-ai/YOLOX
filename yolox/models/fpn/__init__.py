@@ -16,6 +16,7 @@ import copy
 
 from .fpn import FPN
 from .pan import PAN
+from .pan_conv1x1down import PAN_conv1x1down
 
 
 def build_fpn(cfg):
@@ -25,5 +26,7 @@ def build_fpn(cfg):
         return FPN(**fpn_cfg)
     elif name == "PAN":
         return PAN(**fpn_cfg)
+    elif name == "PAN_conv1x1down":
+        return PAN_conv1x1down(**fpn_cfg)
     else:
         raise NotImplementedError

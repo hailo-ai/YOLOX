@@ -7,6 +7,7 @@ import os
 from yolox.exp import Exp as MyExp
 from yolox.models.nanodet_repvgg import create_RepVGG_A12
 from yacs.config import CfgNode
+#from yolox.models.effidehead import Yolov6Head, build_effidehead_layer
 
 class Exp(MyExp):
     def __init__(self):
@@ -26,7 +27,7 @@ class Exp(MyExp):
         self.input_size = (480, 640)  # (height, width)
         self.test_size = (480, 640)  # (height, width)
         self.output_dir = './nanodet_outputs_coco'
-        self.data_dir = '/fastdata/users/COCO'
+        self.data_dir = '/fastdata/users/coco'
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
