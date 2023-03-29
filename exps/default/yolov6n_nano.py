@@ -43,19 +43,7 @@ class Exp(MyExp):
         # self.no_aug_epochs = 50
         # self.warmup_epochs = 0
 
-        # self.data_dir = '/fastdata/users/COCO'
-        self.data_dir = '/fastdata/users/coco_pana'
-        # self.num_classes = 1
-        self.train_ann = "coco_pana_val.json"
-        self.val_ann = "coco_pana_val.json"
-        self.test_ann = "coco_pana_val.json"
-        # self.name = "images"
-
-        # self.data_dir = '/data/data/datasets/kitti_2d_object_detection'
-        # self.train_ann = "train_kitti2d_1cls.json"
-        # self.val_ann = "val_kitti2d_1cls.json"
-        # self.name = "images/train"
-
+        self.data_dir = '/fastdata/users/COCO'
 
     def get_model(self, sublinear=False):
 
