@@ -12,9 +12,9 @@ from .common import dist2bbox, generate_anchors, xywh2xyxy
 
 
 class IOUloss(nn.Module):
-    def __init__(self, reduction="none", loss_type="iou"):
+    def __init__(self, reduce_op="none", loss_type="iou"):
         super(IOUloss, self).__init__()
-        self.reduction = reduction
+        self.reduce_op = reduce_op
         self.loss_type = loss_type
 
     def forward(self, pred, target):
@@ -50,9 +50,9 @@ class IOUloss(nn.Module):
             giou = iou - (area_c - area_u) / area_c.clamp(1e-16)
             loss = 1 - giou.clamp(min=-1.0, max=1.0)
 
-        if self.reduction == "mean":
+        if self.reduce_op == "mean":
             loss = loss.mean()
-        elif self.reduction == "sum":
+        elif self.reduce_op == "sum":
             loss = loss.sum()
 
         return loss
@@ -66,21 +66,22 @@ class IOUlossYolov6:
     """ Calculate IoU loss.
     """
 
-    def __init__(self, box_format='xywh', iou_type='ciou', reduction='none', eps=1e-7):
-        """ Setting of the class.
+    def __init__(self, box_format='xywh', iou_type='siou', reduce_op='none', eps=1e-7):
+        """ Class initialization
         Args:
-            box_format: (string), must be one of 'xywh' or 'xyxy'.
-            iou_type: (string), can be one of 'ciou', 'diou', 'giou' or 'siou'
-            reduction: (string), specifies the reduction to apply to the output, must be one of 'none', 'mean','sum'.
-            eps: (float), a value to avoid divide by zero error.
+            box_format (string): 'xywh' or 'xyxy'
+            iou_type (string): One of ['ciou', 'diou', 'giou' or 'siou']
+            reduce_op (string): Specifies the reduction op to apply to the output. ['none', 'mean','sum']
+            eps (float): Value to avoid division by zero.
         """
         self.box_format = box_format
         self.iou_type = iou_type.lower()
-        self.reduction = reduction
+        self.reduce_op = reduce_op.lower()
         self.eps = eps
 
     def __call__(self, box1, box2):
-        """ calculate iou. box1 and box2 are torch tensor with shape [M, 4] and [Nm 4].
+        """ Calculate Intersection-Over-Union (IoU) between two boxes according to their format.
+            box1 and box2 are torch tensors with shapes [M, 4] and [N, 4].
         """
         if box1.shape[0] != box2.shape[0]:
             box2 = box2.T
@@ -132,7 +133,7 @@ class IOUlossYolov6:
                     alpha = v / (v - iou + (1 + self.eps))
                 iou = iou - (rho2 / c2 + v * alpha)
         elif self.iou_type == 'siou':
-            # SIoU Loss https://arxiv.org/pdf/2205.12740.pdf
+            # SIoU Loss according to paper: https://arxiv.org/pdf/2205.12740.pdf
             s_cw = (b2_x1 + b2_x2 - b1_x1 - b1_x2) * 0.5 + self.eps
             s_ch = (b2_y1 + b2_y2 - b1_y1 - b1_y2) * 0.5 + self.eps
             sigma = torch.pow(s_cw ** 2 + s_ch ** 2, 0.5)
@@ -152,9 +153,9 @@ class IOUlossYolov6:
             iou = iou - 0.5 * (distance_cost + shape_cost)
         loss = 1.0 - iou
 
-        if self.reduction == 'sum':
+        if self.reduce_op == 'sum':
             loss = loss.sum()
-        elif self.reduction == 'mean':
+        elif self.reduce_op == 'mean':
             loss = loss.mean()
 
         return loss
@@ -170,8 +171,7 @@ class CalculateLoss:
                  num_classes=80,
                  input_size=(640, 640),  # (height, width)
                  warmup_epoch=4,
-                 reg_max=0,  # 16
-                 iou_type='giou',
+                 iou_type='siou',
                  loss_weight={
                      'class': 1.0,
                      'iou': 2.5,
@@ -215,9 +215,6 @@ class CalculateLoss:
         batch_size = pred_scores.shape[0]
 
         # Normalize targets bbox (xywh):
-        # targets[:, :, 1:] = targets[:, :, 1:] / 640.0
-        # targets[:, :, 1::2] = targets[:, :, 1::2] / self.input_size[1]  # normalize (xw) by W
-        # targets[:, :, 2::2] = targets[:, :, 2::2] / self.input_size[0]  # normalize (yh) by H
         targets[:, :, 1:] /= gt_bboxes_scale
         # targets
         targets = self._preprocess(targets, batch_size, gt_bboxes_scale)
@@ -227,7 +224,7 @@ class CalculateLoss:
 
         # pboxes
         anchor_points_s = anchor_points / stride_tensor
-        pred_bboxes = self.bbox_decode(anchor_points_s, pred_distri)  # xyxy
+        pred_bboxes = dist2bbox(pred_distri, anchor_points_s)  # xyxy
 
         try:
             # if epoch_num < self.warmup_epoch:
@@ -297,11 +294,8 @@ class CalculateLoss:
             target_bboxes = target_bboxes.cuda()
             target_scores = target_scores.cuda()
             fg_mask = fg_mask.cuda()
-        # Dynamic release GPU memory
-        # if step_num % 10 == 0:
-        #     torch.cuda.empty_cache()
 
-        # rescale bbox
+        # Rescale bbox
         target_bboxes /= stride_tensor
 
         # cls loss
@@ -318,15 +312,15 @@ class CalculateLoss:
             loss_cls /= target_scores_sum
 
         # bbox loss
-        loss_iou, loss_dfl = self.bbox_loss(pred_distri, pred_bboxes, anchor_points_s, target_bboxes,
+        iou_loss, loss_dfl = self.bbox_loss(pred_distri, pred_bboxes, target_bboxes,
                                             target_scores, target_scores_sum, fg_mask)
 
         loss = self.loss_weight['class'] * loss_cls + \
-            self.loss_weight['iou'] * loss_iou + \
+            self.loss_weight['iou'] * iou_loss + \
             self.loss_weight['dfl'] * loss_dfl
 
         return loss, \
-            torch.cat(((self.loss_weight['iou'] * loss_iou).unsqueeze(0),
+            torch.cat(((self.loss_weight['iou'] * iou_loss).unsqueeze(0),
                        (self.loss_weight['dfl'] * loss_dfl).unsqueeze(0),
                        (self.loss_weight['class'] * loss_cls).unsqueeze(0))).detach()
 
@@ -360,48 +354,36 @@ class CalculateLoss:
 
 
 class VarifocalLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, alpha=0.75, gamma=2.0):
         super(VarifocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
 
-    def forward(self, pred_score, gt_score, label, alpha=0.75, gamma=2.0):
-
-        weight = alpha * pred_score.pow(gamma) * (1 - label) + gt_score * label
+    def forward(self, pred_score, gt_score, label):
+        weight = self.alpha * pred_score.pow(self.gamma) * (1 - label) + gt_score * label
         with torch.cuda.amp.autocast(enabled=False):
             loss = (F.binary_cross_entropy(pred_score.float(),
-                    gt_score.float(), reduction='none') * weight).sum()
-
+                    gt_score.float(), reduce_op='none') * weight).sum()
         return loss
 
 
 class BboxLoss(nn.Module):
-    def __init__(self, num_classes, iou_type='giou'):
+    def __init__(self, num_classes, iou_type='siou'):
         super(BboxLoss, self).__init__()
         self.num_classes = num_classes
         self.iou_loss = IOUlossYolov6(box_format='xyxy', iou_type=iou_type, eps=1e-10)
 
-    def forward(self, pred_dist, pred_bboxes, anchor_points,
-                target_bboxes, target_scores, target_scores_sum, fg_mask):
-
-        # select positive samples mask
+    def forward(self, pred_dist, pred_bboxes, target_bboxes, target_scores, target_scores_sum, fg_mask):
         num_pos = fg_mask.sum()
         if num_pos > 0:
-            # iou loss
             bbox_mask = fg_mask.unsqueeze(-1).repeat([1, 1, 4])
-            pred_bboxes_pos = torch.masked_select(pred_bboxes,
-                                                  bbox_mask).reshape([-1, 4])
-            target_bboxes_pos = torch.masked_select(
-                target_bboxes, bbox_mask).reshape([-1, 4])
-            bbox_weight = torch.masked_select(
-                target_scores.sum(-1), fg_mask).unsqueeze(-1)
-            loss_iou = self.iou_loss(pred_bboxes_pos,
-                                     target_bboxes_pos) * bbox_weight
-            if target_scores_sum == 0:
-                loss_iou = loss_iou.sum()
-            else:
-                loss_iou = loss_iou.sum() / target_scores_sum
-            loss_dfl = torch.tensor(0.).to(pred_dist.device)
+            pred_bboxes_pos = torch.masked_select(pred_bboxes, bbox_mask).reshape([-1, 4])
+            target_bboxes_pos = torch.masked_select(target_bboxes, bbox_mask).reshape([-1, 4])
+            bbox_weight = torch.masked_select(target_scores.sum(-1), fg_mask).unsqueeze(-1)
+            iou_loss = self.iou_loss(pred_bboxes_pos, target_bboxes_pos) * bbox_weight
+            iou_loss = iou_loss.sum() if target_scores_sum == 0 else iou_loss.sum() / target_scores_sum
         else:
-            loss_iou = torch.tensor(0.).to(pred_dist.device)
-            loss_dfl = torch.tensor(0.).to(pred_dist.device)
+            iou_loss = torch.tensor(0.).to(pred_dist.device)
+        dfl_loss = torch.tensor(0.).to(pred_dist.device)
 
-        return loss_iou, loss_dfl
+        return iou_loss, dfl_loss

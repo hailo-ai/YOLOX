@@ -50,10 +50,9 @@ class Exp(MyExp):
         if "model" not in self.__dict__:
             from yolox.models import YOLOX, YOLOXHead
             backbone = YOLOv6FPN(self.depth, self.width, act=self.act)
-            num_anchors = 1
             head_channels_list = [32, 64, 128]
-            head_layers = build_effidehead_layer(head_channels_list, num_anchors, self.num_classes)
-            head = Yolov6Head(self.num_classes, num_anchors, len(head_channels_list),
+            head_layers = build_effidehead_layer(head_channels_list, self.num_classes)
+            head = Yolov6Head(self.num_classes, len(head_channels_list),
                               head_layers=head_layers, input_size=self.input_size, iou_type=self.iou_type)
             self.model = YOLOX(backbone, head)
 

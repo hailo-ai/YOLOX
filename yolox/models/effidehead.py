@@ -16,49 +16,32 @@ head=dict(
     out_indices=[17, 20, 23],
     strides=[8, 16, 32],
     iou_type='siou',
-    use_dfl=False,
-    reg_max=0 #if use_dfl is False, please set reg_max to 0
     )
 '''
-
-# TODO: Amit -- Remove use_dfl, reg_max, anchors(?), inplace(?)
 
 
 class Yolov6Head(nn.Module):
     def __init__(self,
                  num_classes=80,
-                 anchors=1,
                  num_layers=3,
-                 inplace=True,
                  head_layers=None,
                  input_size=(640, 640),  # (height, width)
-                 iou_type='siou',
-                 use_dfl=False,  # TODO: Amit -- Delete this variable
-                 reg_max=0):  # detection layer. # TODO: Amit -- Delete this variable
+                 iou_type='siou'
+                 ):
 
         super().__init__()
         assert head_layers is not None
         self.nc = num_classes  # number of classes
         self.no = num_classes + 5  # number of outputs per anchor
         self.nl = num_layers  # number of detection layers
-        if isinstance(anchors, (list, tuple)):
-            self.na = len(anchors[0]) // 2
-        else:
-            self.na = anchors
-        self.anchors = anchors
         self.grid = [torch.zeros(1)] * num_layers
-        self.prior_prob = 1e-2  # TODO: Amit -- Can be deleted
-        self.inplace = inplace
         stride = [8, 16, 32]  # strides computed during build
         self.stride = torch.tensor(stride)
-        self.use_dfl = use_dfl
-        self.reg_max = reg_max
-        self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
+        self.proj_conv = nn.Conv2d(1, 1, 1, bias=False)
         self.grid_cell_offset = 0.5
         self.grid_cell_size = 5.0
         self.compute_loss = CalculateLoss(num_classes=num_classes,
                                         input_size=input_size,
-                                        # reg_max=0,  # AMIT TODO: Delete this variable
                                         iou_type=iou_type)
 
         # Init decouple head
@@ -70,7 +53,7 @@ class Yolov6Head(nn.Module):
 
         # Efficient decoupled head layers
         for i in range(num_layers):
-            idx = i*5
+            idx = i * 5
             self.stems.append(head_layers[idx])
             self.cls_convs.append(head_layers[idx+1])
             self.reg_convs.append(head_layers[idx+2])
@@ -95,8 +78,8 @@ class Yolov6Head(nn.Module):
             w.data.fill_(0.)
             conv.weight = torch.nn.Parameter(w, requires_grad=True)
 
-        self.proj = nn.Parameter(torch.linspace(0, self.reg_max, self.reg_max + 1), requires_grad=False)
-        self.proj_conv.weight = nn.Parameter(self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
+        self.proj = nn.Parameter(torch.linspace(0, 0, 1), requires_grad=False)
+        self.proj_conv.weight = nn.Parameter(self.proj.view([1, 1, 1, 1]).clone().detach(),
                                                    requires_grad=False)
 
     def forward(self, x, labels=None, imgs=None):
@@ -150,11 +133,6 @@ class Yolov6Head(nn.Module):
                 cls_output = self.cls_preds[i](cls_feat)
                 reg_feat = self.reg_convs[i](reg_x)
                 reg_output = self.reg_preds[i](reg_feat)
-
-                if self.use_dfl:
-                    reg_output = reg_output.reshape([-1, 4, self.reg_max + 1, l]).permute(0, 2, 1, 3)
-                    reg_output = self.proj_conv(F.softmax(reg_output, dim=1))
-
                 cls_output = torch.sigmoid(cls_output)
                 cls_score_list.append(cls_output.reshape([b, self.nc, l]))
                 reg_dist_list.append(reg_output.reshape([b, 4, l]))
@@ -174,7 +152,7 @@ class Yolov6Head(nn.Module):
                 axis=-1)
 
 
-def build_effidehead_layer(channels_list, num_anchors, num_classes, reg_max=0):
+def build_effidehead_layer(channels_list, num_classes):
     head_layers = nn.Sequential(
         # stem0
         ConvBNAct(
@@ -200,13 +178,13 @@ def build_effidehead_layer(channels_list, num_anchors, num_classes, reg_max=0):
         # cls_pred0
         nn.Conv2d(
             in_channels=channels_list[0],
-            out_channels=num_classes * num_anchors,
+            out_channels=num_classes,
             kernel_size=1
         ),
         # reg_pred0
         nn.Conv2d(
             in_channels=channels_list[0],
-            out_channels=4 * (reg_max + num_anchors),
+            out_channels=4,
             kernel_size=1
         ),
         # stem1
@@ -233,13 +211,13 @@ def build_effidehead_layer(channels_list, num_anchors, num_classes, reg_max=0):
         # cls_pred1
         nn.Conv2d(
             in_channels=channels_list[1],
-            out_channels=num_classes * num_anchors,
+            out_channels=num_classes,
             kernel_size=1
         ),
         # reg_pred1
         nn.Conv2d(
             in_channels=channels_list[1],
-            out_channels=4 * (reg_max + num_anchors),
+            out_channels=4,
             kernel_size=1
         ),
         # stem2
@@ -266,13 +244,13 @@ def build_effidehead_layer(channels_list, num_anchors, num_classes, reg_max=0):
         # cls_pred2
         nn.Conv2d(
             in_channels=channels_list[2],
-            out_channels=num_classes * num_anchors,
+            out_channels=num_classes,
             kernel_size=1
         ),
         # reg_pred2
         nn.Conv2d(
             in_channels=channels_list[2],
-            out_channels=4 * (reg_max + num_anchors),
+            out_channels=4,
             kernel_size=1
         )
     )

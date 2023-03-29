@@ -33,30 +33,39 @@ class Transpose(nn.Module):
 
 
 def dist2bbox(distance, anchor_points, box_format='xyxy'):
-    '''Transform distance(ltrb) to box(xywh or xyxy).'''
+    '''
+    Convert distance (ltrb) to bbox (xywh or xyxy) according to wanted format
+    Notice: xywh is (xcycwh)
+    '''
     lt, rb = torch.split(distance, 2, -1)
     x1y1 = anchor_points - lt
     x2y2 = anchor_points + rb
-    if box_format == 'xyxy':
-        bbox = torch.cat([x1y1, x2y2], -1)
-    elif box_format == 'xywh':
+    if box_format == 'xywh':
         c_xy = (x1y1 + x2y2) / 2
         wh = x2y2 - x1y1
         bbox = torch.cat([c_xy, wh], -1)
+    elif box_format == 'xyxy':
+        bbox = torch.cat([x1y1, x2y2], -1)
+    else:
+        assert False, f"Unknown bbox format {box_format}"
     return bbox
 
 
 def xywh2xyxy(bboxes):
-    '''Transform bbox(xywh) to box(xyxy).'''
-    bboxes[..., 0] = bboxes[..., 0] - bboxes[..., 2] * 0.5
-    bboxes[..., 1] = bboxes[..., 1] - bboxes[..., 3] * 0.5
-    bboxes[..., 2] = bboxes[..., 0] + bboxes[..., 2]
-    bboxes[..., 3] = bboxes[..., 1] + bboxes[..., 3]
+    '''
+    Convert bbox from xcycwh format to xyxy format
+    '''
+    bboxes[..., 0] = bboxes[..., 0] - bboxes[..., 2] * 0.5  # x_center to x1
+    bboxes[..., 1] = bboxes[..., 1] - bboxes[..., 3] * 0.5  # y_center to y1
+    bboxes[..., 2] = bboxes[..., 0] + bboxes[..., 2]  # x2 = x1 + w
+    bboxes[..., 3] = bboxes[..., 1] + bboxes[..., 3]  # y2 = y1 + h
     return bboxes
 
 
 def generate_anchors(feats, fpn_strides, grid_cell_size=5.0, grid_cell_offset=0.5,  device='cpu', is_eval=False):
-    '''Generate anchors from features.'''
+    '''
+    Generate anchors from features
+    '''
     anchors = []
     anchor_points = []
     stride_tensor = []
@@ -74,8 +83,8 @@ def generate_anchors(feats, fpn_strides, grid_cell_size=5.0, grid_cell_offset=0.
             stride_tensor.append(
                 torch.full(
                     (h * w, 1), stride, dtype=torch.float, device=device))
-        anchor_points = torch.cat(anchor_points)
         stride_tensor = torch.cat(stride_tensor)
+        anchor_points = torch.cat(anchor_points)
         return anchor_points, stride_tensor
     else:
         for i, stride in enumerate(fpn_strides):
@@ -93,8 +102,8 @@ def generate_anchors(feats, fpn_strides, grid_cell_size=5.0, grid_cell_offset=0.
             anchor_point = torch.stack(
                 [shift_x, shift_y], axis=-1).clone().to(feats[0].dtype)
 
-            anchors.append(anchor.reshape([-1, 4]))
             anchor_points.append(anchor_point.reshape([-1, 2]))
+            anchors.append(anchor.reshape([-1, 4]))
             num_anchors_list.append(len(anchors[-1]))
             stride_tensor.append(
                 torch.full(
