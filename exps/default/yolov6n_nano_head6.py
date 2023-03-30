@@ -9,6 +9,7 @@ from yolox.exp import Exp as MyExp
 from yolox.models.yolov6_fpn import YOLOv6FPN
 from yolox.models.effidehead import Yolov6Head, build_effidehead_layer
 
+
 class Exp(MyExp):
     def __init__(self):
         super(Exp, self).__init__()
@@ -29,18 +30,14 @@ class Exp(MyExp):
         self.eval_interval = 10
         self.max_epoch = 300
         self.data_num_workers = 6
-        self.basic_lr_per_img = 0.03 / 64.0    # 0.03 / 64.0  # 0.0005 / 64 
+        self.basic_lr_per_img = 0.03 / 64.0    # 0.03 / 64.0  # 0.0005 / 64
         # self.no_aug_epochs = 50
         # self.warmup_epochs = 0
-
         self.data_dir = '/fastdata/users/COCO'
-
         # Loss
-        self.iou_type='siou'
-
+        self.iou_type = 'siou'
 
     def get_model(self, sublinear=False):
-
         def init_yolo(M):
             for m in M.modules():
                 if isinstance(m, nn.BatchNorm2d):
@@ -48,7 +45,7 @@ class Exp(MyExp):
                     m.momentum = 0.03
 
         if "model" not in self.__dict__:
-            from yolox.models import YOLOX, YOLOXHead
+            from yolox.models import YOLOX
             backbone = YOLOv6FPN(self.depth, self.width, act=self.act)
             head_channels_list = [32, 64, 128]
             head_layers = build_effidehead_layer(head_channels_list, self.num_classes)

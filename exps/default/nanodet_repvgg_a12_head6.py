@@ -9,6 +9,7 @@ from yolox.models.nanodet_repvgg import create_RepVGG_A12
 from yacs.config import CfgNode
 from yolox.models.effidehead import Yolov6Head, build_effidehead_layer
 
+
 class Exp(MyExp):
     def __init__(self):
         super(Exp, self).__init__()
@@ -29,11 +30,11 @@ class Exp(MyExp):
         self.test_size = (480, 640)  # (height, width)
         self.output_dir = './nanodet_outputs_coco'
         self.data_dir = '/fastdata/users/COCO'
-
+        # Loss
+        self.iou_type = 'siou'
 
     def get_model(self):
-        from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
-
+        from yolox.models import YOLOX
         cfg = dict(
             name="PAN_conv1x1down",
             in_channels=[128, 128, 256],
@@ -42,15 +43,11 @@ class Exp(MyExp):
             num_outs=3,
         )
         fpn_cfg = CfgNode(cfg)
-
-        in_channels = [256, 256, 256] # input channels to the yolohead (this is the FPN output)
-        backbone = create_RepVGG_A12(fpn_cfg) # PAN also
-        # head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
-        num_anchors = 1
-        # head_channels_list = [32, 64, 128]
+        backbone = create_RepVGG_A12(fpn_cfg)  # PAN also
         head_channels_list = [128, 128, 128]
-        head_layers = build_effidehead_layer(head_channels_list, num_anchors, self.num_classes)
-        head = Yolov6Head(self.num_classes, num_anchors, len(head_channels_list), head_layers=head_layers)
+        head_layers = build_effidehead_layer(head_channels_list, self.num_classes)
+        head = Yolov6Head(self.num_classes, len(head_channels_list),
+                          head_layers=head_layers, input_size=self.input_size, iou_type=self.iou_type)
         self.model = YOLOX(backbone, head)
 
         self.model.head.initialize_biases(1e-2)

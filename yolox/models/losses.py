@@ -12,9 +12,9 @@ from .common import dist2bbox, generate_anchors, xywh2xyxy
 
 
 class IOUloss(nn.Module):
-    def __init__(self, reduce_op="none", loss_type="iou"):
+    def __init__(self, reduction="none", loss_type="iou"):
         super(IOUloss, self).__init__()
-        self.reduce_op = reduce_op
+        self.reduction = reduction
         self.loss_type = loss_type
 
     def forward(self, pred, target):
@@ -50,17 +50,12 @@ class IOUloss(nn.Module):
             giou = iou - (area_c - area_u) / area_c.clamp(1e-16)
             loss = 1 - giou.clamp(min=-1.0, max=1.0)
 
-        if self.reduce_op == "mean":
+        if self.reduction == "mean":
             loss = loss.mean()
-        elif self.reduce_op == "sum":
+        elif self.reduction == "sum":
             loss = loss.sum()
-
         return loss
 
-
-############################################################
-# Added by us (Amit) TODO: Think if to drop this header
-############################################################
 
 class IOUlossYolov6:
     """ Calculate IoU loss.
@@ -363,7 +358,7 @@ class VarifocalLoss(nn.Module):
         weight = self.alpha * pred_score.pow(self.gamma) * (1 - label) + gt_score * label
         with torch.cuda.amp.autocast(enabled=False):
             loss = (F.binary_cross_entropy(pred_score.float(),
-                    gt_score.float(), reduce_op='none') * weight).sum()
+                    gt_score.float(), reduction='none') * weight).sum()
         return loss
 
 
