@@ -175,18 +175,20 @@ class RepVGG(nn.Module):
         self.cur_layer_idx = 1
         self.stage1 = self._make_stage(int(64 * width_multiplier[0]), num_blocks[0], stride=2)
         self.stage2 = self._make_stage(int(128 * width_multiplier[1]), num_blocks[1], stride=2)
-        self.stage3 = self._make_stage(int(256 * width_multiplier[2]), num_blocks[2], stride=2)
+        self.stage3 = self._make_stage(int(256 * width_multiplier[2]), num_blocks[2], stride=2, manual_modify=False)
         out_planes = last_channel if last_channel else int(512 * width_multiplier[3])
         self.stage4 = self._make_stage(out_planes, num_blocks[3], stride=2)
 
         if fpn_cfg is not None:
             self.fpn = build_fpn(fpn_cfg)
 
-    def _make_stage(self, planes, num_blocks, stride):
+    def _make_stage(self, planes, num_blocks, stride, manual_modify=False):
         strides = [stride] + [1]*(num_blocks-1)
         blocks = []
-        for stride in strides:
+        planes_orig = planes
+        for i, stride in enumerate(strides):
             cur_groups = self.override_groups_map.get(self.cur_layer_idx, 1)
+            planes = 96 if manual_modify and i < 4 else planes_orig
             blocks.append(RepVGGBlock(in_channels=self.in_planes, out_channels=planes, kernel_size=3,
                                       stride=stride, padding=1, groups=cur_groups, deploy=self.deploy, use_se=self.use_se))
             self.in_planes = planes
