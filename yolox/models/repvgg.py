@@ -139,10 +139,9 @@ class RepVGGBlock(nn.Module):
         self.deploy = True
 
 
-
 class RepVGG(nn.Module):
 
-    def __init__(self, num_blocks, width_multiplier=None, override_groups_map=None, deploy=False, use_se=False, use_checkpoint=False):
+    def __init__(self, num_blocks, out_channels=None, width_multiplier=None, override_groups_map=None, deploy=False, use_se=False, use_checkpoint=False):
         super(RepVGG, self).__init__()
         assert len(width_multiplier) == 4
         self.deploy = deploy
@@ -154,10 +153,10 @@ class RepVGG(nn.Module):
         self.in_planes = 16
         self.stage0 = RepVGGBlock(in_channels=3, out_channels=self.in_planes, kernel_size=3, stride=2, padding=1, deploy=self.deploy, use_se=self.use_se)
         self.cur_layer_idx = 1
-        self.stage1 = self._make_stage(int(128 * width_multiplier[0]), num_blocks[0], stride=2)
-        self.stage2 = self._make_stage(int(256 * width_multiplier[1]), num_blocks[1], stride=2)
-        self.stage3 = self._make_stage(int(512 * width_multiplier[2]), num_blocks[2], stride=2)
-        self.stage4 = self._make_stage(int(1024 * width_multiplier[3]), num_blocks[3], stride=2)
+        self.stage1 = self._make_stage(int(out_channels[0] * width_multiplier[0]), num_blocks[0], stride=2)
+        self.stage2 = self._make_stage(int(out_channels[1] * width_multiplier[1]), num_blocks[1], stride=2)
+        self.stage3 = self._make_stage(int(out_channels[2] * width_multiplier[2]), num_blocks[2], stride=2)
+        self.stage4 = self._make_stage(int(out_channels[3] * width_multiplier[3]), num_blocks[3], stride=2)
 
     def _make_stage(self, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -169,7 +168,7 @@ class RepVGG(nn.Module):
             self.in_planes = planes
             self.cur_layer_idx += 1
         return nn.Sequential(*blocks)
-    
+
     def forward(self, x):
         """
         Args:
@@ -192,7 +191,8 @@ class RepVGG(nn.Module):
         outputs.append(x)
         return tuple(outputs)
 
-def repvgg_model_convert(model:torch.nn.Module, save_path=None, do_copy=True):
+
+def repvgg_model_convert(model: torch.nn.Module, save_path=None, do_copy=True):
     if do_copy:
         model = copy.deepcopy(model)
     for module in model.modules():

@@ -35,7 +35,7 @@ class Exp(MyExp):
 
         self.act = 'relu'
         self.output_dir = './yolov6n_outputs_coco'
-        self.print_interval = 50
+        self.print_interval = 100
         self.eval_interval = 5
         self.max_epoch = 300
         self.data_num_workers = 6
@@ -44,6 +44,16 @@ class Exp(MyExp):
         # self.warmup_epochs = 0
 
         self.data_dir = '/fastdata/users/COCO'
+
+        # backbone config
+        self.bb_channels_list = [128, 256, 512, 1024]  # bb_channels * width = [32, 64, 128, 256]
+        self.bb_num_repeats_list = [9, 15, 21, 12]  # bb_num_repeats * depth = [3, 5, 7, 4]
+        # neck config
+        self.neck_channels_list = [256, 128, 128, 256, 256, 512]  # neck_channels * width = [64, 32, 32, 64, 64, 128]
+        self.neck_num_repeats_list = [9, 12, 12, 9]  # neck_num_repeats * depth = [3, 4, 4, 3]
+        # head config
+        self.head_width = 0.5
+        self.head_channels_list = [64, 128, 256]
 
     def get_model(self, sublinear=False):
 
@@ -55,10 +65,12 @@ class Exp(MyExp):
 
         if "model" not in self.__dict__:
             from yolox.models import YOLOX, YOLOXHead
-            in_channels = [64, 128, 256]
-            width = 0.5
-            backbone = YOLOv6FPN(self.depth, self.width, act=self.act)
-            head = YOLOXHead(self.num_classes, width, in_channels=in_channels, act=self.act)
+            backbone = YOLOv6FPN(self.depth, self.width,
+                                 self.bb_channels_list, self.bb_num_repeats_list,
+                                 self.neck_channels_list, self.neck_num_repeats_list)
+
+            assert len(self.head_channels_list) == 3, "Number of head branches should be 3"
+            head = YOLOXHead(self.num_classes, self.head_width, in_channels=self.head_channels_list, act=self.act)
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)
