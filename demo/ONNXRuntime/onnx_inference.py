@@ -56,6 +56,16 @@ def make_parser():
         action="store_true",
         help="Whether your model uses p6 in FPN/PAN.",
     )
+    parser.add_argument(
+        "--skip_postproc",
+        action="store_true",
+        help="Whether to skip the postprocessing stage",
+    )
+    parser.add_argument(
+        "--rgb",
+        action="store_true",
+        help="Whether the model was trained on RGB",
+    )
     return parser
 
 
@@ -64,14 +74,20 @@ if __name__ == '__main__':
 
     input_shape = tuple(map(int, args.input_shape.split(',')))
     origin_img = cv2.imread(args.image_path)
-    origin_img = cv2.cvtColor(origin_img, cv2.COLOR_BGR2RGB)
-    img, ratio = preprocess(origin_img, input_shape)
+    if args.rgb:
+        img = cv2.cvtColor(origin_img, cv2.COLOR_BGR2RGB)
+        img, ratio = preprocess(img, input_shape)
+    else:
+        img, ratio = preprocess(origin_img, input_shape)
 
     session = onnxruntime.InferenceSession(args.model)
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
     output = session.run(None, ort_inputs)
-    predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
+    if args.skip_postproc:
+        predictions = output[0][0]
+    else:
+        predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
 
     boxes = predictions[:, :4]
     scores = predictions[:, 4:5] * predictions[:, 5:]
@@ -82,7 +98,7 @@ if __name__ == '__main__':
     boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
     boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
     boxes_xyxy /= ratio
-    dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.1)
+    dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.01)
     if dets is not None:
         final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
         origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,

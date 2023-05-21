@@ -83,6 +83,11 @@ def make_parser():
         action="store_true",
         help="Using TensorRT model for testing.",
     )
+    parser.add_argument(
+        "--rgb",
+        action="store_true",
+        help="Whether the model was trained on RGB",
+    )
     return parser
 
 
@@ -141,7 +146,8 @@ class Predictor(object):
         img_info["height"] = height
         img_info["width"] = width
         img_info["raw_img"] = img
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if args.rgb:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         ratio = min(self.test_size[0] / img.shape[0], self.test_size[1] / img.shape[1])
         img_info["ratio"] = ratio

@@ -44,6 +44,7 @@ class COCODataset(Dataset):
         img_size=(416, 416),
         preproc=None,
         cache=False,
+        rgb=False,
     ):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
@@ -71,6 +72,7 @@ class COCODataset(Dataset):
         self.name = name
         self.img_size = img_size
         self.preproc = preproc
+        self.rgb = rgb
         self.annotations = self._load_coco_annotations()
         if cache:
             self._cache_images()
@@ -192,7 +194,8 @@ class COCODataset(Dataset):
 
         img = cv2.imread(img_file)
         assert img is not None
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if self.rgb:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
 
     def pull_item(self, index):

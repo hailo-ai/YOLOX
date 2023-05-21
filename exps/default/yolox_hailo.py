@@ -38,6 +38,7 @@ class Exp(MyExp):
         self.train_ann = "instances_train2017_4cls.json"
         self.val_ann = "instances_val2017_4cls.json"
         self.test_ann = "instances_val2017_4cls.json"
+        self.rgb = True
 
         # Loss
         self.iou_type = 'siou'

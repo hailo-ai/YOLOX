@@ -48,6 +48,7 @@ class Exp(BaseExp):
         self.mixup_scale = (0.5, 1.5)
         self.shear = 2.0
         self.enable_mixup = True
+        self.rgb = False
 
         # --------------  training config --------------------- #
         self.warmup_epochs = 5
@@ -120,6 +121,7 @@ class Exp(BaseExp):
                     flip_prob=self.flip_prob,
                     hsv_prob=self.hsv_prob),
                 cache=cache_img,
+                rgb=self.rgb
             )
 
         dataset = MosaicDetection(
@@ -250,6 +252,7 @@ class Exp(BaseExp):
             # name="images" if not testdev else "test2017",
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
+            rgb=self.rgb
         )
 
         if is_distributed:
