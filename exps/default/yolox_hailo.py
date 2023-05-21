@@ -60,14 +60,14 @@ class Exp(MyExp):
         if "model" not in self.__dict__:
             from yolox.models import YOLOX
             backbone = YOLOxHailoFPN(self.depth, self.width,
-                                 self.bb_channels_list, self.bb_num_repeats_list,
-                                 self.neck_channels_list, self.neck_num_repeats_list)
+                                     self.bb_channels_list, self.bb_num_repeats_list,
+                                     self.neck_channels_list, self.neck_num_repeats_list)
 
             assert len(self.head_channels_list) == 3, "Number of head branches should be 3"
             head_channels_list = [int(round(ch * self.width)) for ch in self.head_channels_list]
             head_layers = build_effidehead_layer(head_channels_list, self.num_classes)
             head = YoloxHailoHead(self.num_classes, len(head_channels_list),
-                              head_layers=head_layers, input_size=self.input_size, iou_type=self.iou_type)
+                                  head_layers=head_layers, input_size=self.input_size, iou_type=self.iou_type)
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)
