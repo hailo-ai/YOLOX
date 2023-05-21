@@ -134,6 +134,7 @@ class Predictor(object):
         if isinstance(img, str):
             img_info["file_name"] = os.path.basename(img)
             img = cv2.imread(img)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         else:
             img_info["file_name"] = None
 

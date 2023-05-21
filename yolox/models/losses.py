@@ -57,7 +57,7 @@ class IOUloss(nn.Module):
         return loss
 
 
-class IOUlossYolov6:
+class IOUlossHailo:
     """ Calculate IoU loss.
     """
 
@@ -322,7 +322,7 @@ class CalculateLoss:
     def _preprocess(self, targets, batch_size, scale_tensor):
         '''
         '''
-        # Prepare YOLOx labels [B, max_labels, 5] (5 = cls+bbox) to Yolov6 [valid_labels, 6] (6 = img_idx, cls, bbox)
+        # Prepare YOLOx labels [B, max_labels, 5] (5 = cls+bbox) to Hailo format [valid_labels, 6] (6 = img_idx, cls, bbox)
         # nlabel = (targets.sum(dim=2) > 0).sum(dim=1)  # will result in [B], each with how many valid labels inside
         _max_labels = targets.shape[1]
         mask = ~(targets == 0).all(dim=-1)
@@ -333,7 +333,7 @@ class CalculateLoss:
         batch_index_filtered = batch_index[mask_flatten].unsqueeze(1).to(targets.device)
         targets = torch.cat([batch_index_filtered, targets_filtered.reshape(-1, 5)], dim=-1)
 
-        # as yolov6
+        # as yolox hailo
         targets_list = np.zeros((batch_size, 1, 5)).tolist()
         for i, item in enumerate(targets.cpu().numpy().tolist()):
             targets_list[int(item[0])].append(item[1:])
@@ -366,7 +366,7 @@ class BboxLoss(nn.Module):
     def __init__(self, num_classes, iou_type='siou'):
         super(BboxLoss, self).__init__()
         self.num_classes = num_classes
-        self.iou_loss = IOUlossYolov6(box_format='xyxy', iou_type=iou_type, eps=1e-10)
+        self.iou_loss = IOUlossHailo(box_format='xyxy', iou_type=iou_type, eps=1e-10)
 
     def forward(self, pred_dist, pred_bboxes, target_bboxes, target_scores, target_scores_sum, fg_mask):
         num_pos = fg_mask.sum()

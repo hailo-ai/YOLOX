@@ -20,7 +20,7 @@ head=dict(
 '''
 
 
-class Yolov6Head(nn.Module):
+class YoloxHailoHead(nn.Module):
     def __init__(self,
                  num_classes=80,
                  num_layers=3,

@@ -192,7 +192,7 @@ class COCODataset(Dataset):
 
         img = cv2.imread(img_file)
         assert img is not None
-
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
 
     def pull_item(self, index):

@@ -64,6 +64,7 @@ if __name__ == '__main__':
 
     input_shape = tuple(map(int, args.input_shape.split(',')))
     origin_img = cv2.imread(args.image_path)
+    origin_img = cv2.cvtColor(origin_img, cv2.COLOR_BGR2RGB)
     img, ratio = preprocess(origin_img, input_shape)
 
     session = onnxruntime.InferenceSession(args.model)

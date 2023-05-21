@@ -38,7 +38,7 @@ def make_parser():
         "--exp_file",
         default=None,
         type=str,
-        help="expriment description file",
+        help="experiment description file",
     )
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
@@ -48,6 +48,11 @@ def make_parser():
         help="Modify config options using the command-line",
         default=None,
         nargs=argparse.REMAINDER,
+    )
+    parser.add_argument(
+        "--decode_in_inference",
+        action="store_true",
+        help="decode in inference or not"
     )
 
     return parser
@@ -72,7 +77,6 @@ def main():
 
     # load the model state dict
     ckpt = torch.load(ckpt_file, map_location="cpu")
-
     model.eval()
     if "model" in ckpt:
         ckpt = ckpt["model"]
@@ -82,10 +86,13 @@ def main():
     for module in model.modules():
         if hasattr(module, 'switch_to_deploy'):
             module.switch_to_deploy()
-    model.head.decode_in_inference = False
+    model.head.decode_in_inference = args.decode_in_inference
+
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
+    # Dry run
+    dummy_output = model(dummy_input)
 
     torch.onnx._export(
         model,
@@ -97,23 +104,18 @@ def main():
                       args.output: {0: 'batch'}} if args.dynamic else None,
         opset_version=args.opset,
     )
-    logger.info("generated onnx model named {}".format(args.output_name))
+    logger.info("Generated onnx model named {}".format(args.output_name))
 
     if not args.no_onnxsim:
         import onnx
-
         from onnxsim import simplify
 
-        input_shapes = {args.input: list(dummy_input.shape)} if args.dynamic else None
-
-        # use onnxsimplify to reduce reduent model.
+        # use onnx-simplifier to reduce reduent model.
         onnx_model = onnx.load(args.output_name)
-        model_simp, check = simplify(onnx_model,
-                                     dynamic_input_shape=args.dynamic,
-                                     input_shapes=input_shapes)
+        model_simp, check = simplify(onnx_model)
         assert check, "Simplified ONNX model could not be validated"
         onnx.save(model_simp, args.output_name)
-        logger.info("generated simplified onnx model named {}".format(args.output_name))
+        logger.info("Generated simplified onnx model named {}".format(args.output_name))
 
 
 if __name__ == "__main__":

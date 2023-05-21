@@ -7,7 +7,7 @@ import os
 from yolox.exp import Exp as MyExp
 from yolox.models.nanodet_repvgg import create_RepVGG_A12
 from yacs.config import CfgNode
-from yolox.models.effidehead import Yolov6Head, build_effidehead_layer
+from yolox.models.effidehead import YoloxHailoHead, build_effidehead_layer
 
 
 class Exp(MyExp):
@@ -46,7 +46,7 @@ class Exp(MyExp):
         backbone = create_RepVGG_A12(fpn_cfg)  # PAN also
         head_channels_list = [128, 128, 128]
         head_layers = build_effidehead_layer(head_channels_list, self.num_classes)
-        head = Yolov6Head(self.num_classes, len(head_channels_list),
+        head = YoloxHailoHead(self.num_classes, len(head_channels_list),
                           head_layers=head_layers, input_size=self.input_size, iou_type=self.iou_type)
         self.model = YOLOX(backbone, head)
 

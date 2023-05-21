@@ -9,9 +9,9 @@ from .panrepvgg_neck import PANRepVGGNeck
 from .network_blocks import BaseConv
 
 
-class YOLOv6FPN(nn.Module):
+class YOLOxHailoFPN(nn.Module):
     """
-    YOLOv6FPN module.
+    YOLOxHailoFPN module.
     """
 
     def __init__(
