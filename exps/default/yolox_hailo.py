@@ -34,10 +34,11 @@ class Exp(MyExp):
 
         # Data
         self.num_classes = 4
-        self.data_dir = '/fastdata/users/COCO'
+        self.data_dir = '/fastdata/coco/coco_4classes/'
         self.train_ann = "instances_train2017_4cls.json"
         self.val_ann = "instances_val2017_4cls.json"
         self.test_ann = "instances_val2017_4cls.json"
+        self.name = 'train2017_4cls/images/'
         self.rgb = True
 
         # Loss

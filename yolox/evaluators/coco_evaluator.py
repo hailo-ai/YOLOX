@@ -16,7 +16,7 @@ import numpy as np
 
 import torch
 
-from yolox.data.datasets import COCO_CLASSES
+from yolox.data.datasets import COCO_CLASSES, COCO_4CLASSES
 from yolox.utils import (
     gather,
     is_main_process,
@@ -29,7 +29,7 @@ from yolox.utils import (
 KITTI_CLASSES = ["Pedestrian"]
 
 
-def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
+def per_class_AR_table(coco_eval, class_names=COCO_4CLASSES, headers=["class", "AR"], colums=6):
     per_class_AR = {}
     recalls = coco_eval.eval["recall"]
     # dimension of recalls: [TxKxAxM]
@@ -52,7 +52,7 @@ def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     return table
 
 
-def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AP"], colums=6):
+def per_class_AP_table(coco_eval, class_names=COCO_4CLASSES, headers=["class", "AP"], colums=6):
     per_class_AP = {}
     precisions = coco_eval.eval["precision"]
     # dimension of precisions: [TxRxKxAxM]
