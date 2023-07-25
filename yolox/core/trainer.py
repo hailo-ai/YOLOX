@@ -29,6 +29,8 @@ from yolox.utils import (
     synchronize
 )
 
+from yolov5.utils.neuralmagic import sparsezoo_download, maybe_create_sparsification_manager, SparsificationManager
+
 
 class Trainer:
     def __init__(self, exp, args):
@@ -140,6 +142,14 @@ class Trainer:
         # value of epoch will be set in `resume_train`
         model = self.resume_train(model)
 
+        # SPARSEML
+        ckpt = torch.load(self.args.ckpt, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
+        ckpt["epoch"] = -1
+        ckpt["ema"] = ckpt.get("ema", None)
+        sparsification_manager = maybe_create_sparsification_manager(model, ckpt=ckpt,
+                                                                     train_recipe=self.args.recipe,
+                                                                     recipe_args=self.args.recipe_args,
+                                                                     device=self.device, resumed=self.args.resume)
         # data related init
         self.no_aug = self.start_epoch >= self.max_epoch - self.exp.no_aug_epochs
         self.train_loader = self.exp.get_data_loader(
@@ -175,6 +185,21 @@ class Trainer:
         if self.rank == 0:
             self.tblogger = SummaryWriter(self.file_name)
 
+        start_epoch = 0
+        resume = False
+        self.scaler, scheduler, self.ema_model, epochs = sparsification_manager.initialize(
+                    loggers=None,  # None / self.tblogger / logger
+                    scaler=self.scaler,
+                    optimizer=self.optimizer,
+                    scheduler=self.lr_scheduler,
+                    ema=self.ema_model,
+                    start_epoch=start_epoch,
+                    steps_per_epoch=len(self.train_loader),
+                    epochs=self.max_epoch,
+                    compute_loss=None,  # None / some loss function
+                    distillation_teacher=None,
+                    resumed=resume,
+                )
         logger.info("Training start...")
         logger.info("\n{}".format(model))
 

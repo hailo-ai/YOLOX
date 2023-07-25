@@ -88,6 +88,14 @@ def make_parser():
         default=None,
         nargs=argparse.REMAINDER,
     )
+
+    parser.add_argument('--recipe', type=str, default=None, help='Path to a sparsification recipe, '
+                                                                 'see https://github.com/neuralmagic/sparseml for more information')
+    parser.add_argument("--recipe-args", type=str, default=None, help = 'A json string, csv key=value string, or dictionary '
+                                                                        'containing arguments to override the root arguments '
+                                                                        'within the recipe such as learning rate or num epochs')
+
+
     return parser
 
 

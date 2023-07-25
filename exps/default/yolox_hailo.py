@@ -27,19 +27,23 @@ class Exp(MyExp):
         self.act = 'relu'
         self.output_dir = './yolox_hailo_outputs_4cls'
         self.print_interval = 100
-        self.eval_interval = 10
-        self.max_epoch = 300
-        self.data_num_workers = 6
+        self.eval_interval = 5
+        self.max_epoch = 50
+        self.data_num_workers = 16
         self.basic_lr_per_img = 0.02 / 64.0
 
         # Data
         self.num_classes = 4
         self.data_dir = '/fastdata/coco/coco_4classes/'
-        self.train_ann = "instances_train2017_4cls.json"
+        self.train_ann = "instances_val2017_4cls.json"
         self.val_ann = "instances_val2017_4cls.json"
         self.test_ann = "instances_val2017_4cls.json"
-        self.name = 'train2017_4cls/images/'
+        self.name = 'val2017_4cls/images/'
         self.rgb = True
+
+        # Sparsity
+        self.recipe = None
+        self.recipe_args = None
 
         # Loss
         self.iou_type = 'siou'
