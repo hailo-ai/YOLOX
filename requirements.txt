@@ -1,5 +1,5 @@
 # TODO: Update with exact module version
-numpy==1.21.2
+numpy==1.25.2
 torch==1.13.1
 opencv_python==4.5.5.64
 loguru==0.6.0
