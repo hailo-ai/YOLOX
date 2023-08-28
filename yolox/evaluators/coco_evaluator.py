@@ -234,7 +234,7 @@ class COCOEvaluator:
         if not is_main_process():
             return 0, 0, None
 
-        logger.info("Evaluate in main process...")
+        logger.info(f"Evaluate in main process... {len(data_dict)} predictions")
 
         annType = ["segm", "bbox", "keypoints"]
 

@@ -327,9 +327,9 @@ class CalculateLoss:
         _max_labels = targets.shape[1]
         mask = ~(targets == 0).all(dim=-1)
         batch_index = torch.arange(batch_size).repeat(
-            _max_labels, 1).transpose(0, 1).flatten().unsqueeze(1)
+            _max_labels, 1).transpose(0, 1).flatten().unsqueeze(1).to(targets.device)
         targets_filtered = targets[mask]
-        mask_flatten = mask.view(batch_size * _max_labels, 1)
+        mask_flatten = mask.view(batch_size * _max_labels, 1).to(targets.device)
         batch_index_filtered = batch_index[mask_flatten].unsqueeze(1).to(targets.device)
         targets = torch.cat([batch_index_filtered, targets_filtered.reshape(-1, 5)], dim=-1)
 

@@ -14,7 +14,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from yolox.core import launch
 from yolox.exp import get_exp
-from yolox.utils import configure_nccl, fuse_model, get_local_rank, get_model_info, setup_logger
+from yolox.utils import configure_nccl, fuse_model, get_local_rank, get_model_info, setup_logger, calc_sparsity
 
 
 def make_parser():
@@ -102,6 +102,13 @@ def make_parser():
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument(
+        "--deploy",
+        dest="deploy",
+        default=False,
+        action="store_true",
+        help="Run evaluation on deployment model",
+    )
     return parser
 
 
@@ -181,6 +188,14 @@ def main(exp, args, num_gpu):
     else:
         trt_file = None
         decoder = None
+
+    calc_sparsity(model.state_dict(), logger)
+    if args.deploy:
+        logger.info("Switching to deployment model")
+        for module in model.modules():
+            if hasattr(module, 'switch_to_deploy'):
+                module.switch_to_deploy()
+        calc_sparsity(model.state_dict(), logger)
 
     # start evaluate
     *_, summary = evaluator.evaluate(

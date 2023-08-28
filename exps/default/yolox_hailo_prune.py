@@ -26,19 +26,19 @@ class Exp(MyExp):
 
         self.act = 'relu'
         self.output_dir = './yolox_hailo_outputs_4cls_prune'
-        self.print_interval = 100
+        self.print_interval = 200
         self.eval_interval = 5
         self.max_epoch = 400
         self.data_num_workers = 8
-        self.basic_lr_per_img = 0.02 / 64.0
+        # self.basic_lr_per_img = 0.02 / 64.0
 
         # Data
         self.num_classes = 4
         self.data_dir = '/fastdata/coco/coco_4classes/'
-        self.train_ann = "instances_val2017_4cls.json"
+        self.train_ann = "instances_train2017_4cls.json"
         self.val_ann = "instances_val2017_4cls.json"
         self.test_ann = "instances_val2017_4cls.json"
-        self.name = 'val2017_4cls/images/'
+        self.name = 'train2017_4cls/images/'
         self.rgb = True
 
         # Sparsity
@@ -46,6 +46,8 @@ class Exp(MyExp):
         self.recipe_args = None
         self.test_conf = 0.05
         self.warmup_epochs = 0
+        self.basic_lr_per_img = 0.000001 / 8.0  # with bs=8 will result in constant lr=1e-5
+        self.scheduler = "constant"
 
         # Loss
         self.iou_type = 'siou'

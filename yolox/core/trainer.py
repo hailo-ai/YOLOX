@@ -6,6 +6,7 @@ import datetime
 import os
 import time
 from loguru import logger
+from copy import deepcopy
 
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -30,7 +31,7 @@ from yolox.utils import (
 )
 
 from yolov5.utils.neuralmagic import sparsezoo_download, maybe_create_sparsification_manager, SparsificationManager
-
+from yolov5.utils.torch_utils import de_parallel                                      
 
 class Trainer:
     def __init__(self, exp, args):
@@ -146,7 +147,7 @@ class Trainer:
         ckpt = torch.load(self.args.ckpt, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
         ckpt["epoch"] = -1
         ckpt["ema"] = ckpt.get("ema", None)
-        sparsification_manager = maybe_create_sparsification_manager(model, ckpt=ckpt,
+        self.sparsification_manager = maybe_create_sparsification_manager(model, ckpt=ckpt,
                                                                      train_recipe=self.args.recipe,
                                                                      recipe_args=self.args.recipe_args,
                                                                      device=self.device, resumed=self.args.resume)
@@ -185,9 +186,9 @@ class Trainer:
         if self.rank == 0:
             self.tblogger = SummaryWriter(self.file_name)
 
-        start_epoch = 0
-        resume = False
-        self.scaler, scheduler, self.ema_model, epochs = sparsification_manager.initialize(
+        start_epoch = 295
+        resume = True
+        self.scaler, scheduler, self.ema_model, epochs = self.sparsification_manager.initialize(
                     loggers=None,  # None / self.tblogger / logger
                     scaler=self.scaler,
                     optimizer=self.optimizer,
@@ -363,3 +364,26 @@ class Trainer:
                 self.file_name,
                 ckpt_name,
             )
+
+            if self.sparsification_manager:
+                final_epoch = self.epoch + 1 == self.max_epoch
+                print(f"[Epoch #{self.epoch}] Saving sparse checkpoint !! {final_epoch=}")
+                ckpt = {
+                    'epoch': self.epoch,
+                    'model': deepcopy(de_parallel(self.model)).half(),
+                    'ema': deepcopy(self.ema_model.ema).half(),
+                    'updates': self.ema_model.updates,
+                    'optimizer': self.optimizer.state_dict(),
+                    'date': datetime.datetime.now().isoformat()}
+                ckpt = self.sparsification_manager.update_state_dict_for_saving(ckpt, final_epoch, self.use_model_ema, self.exp.num_classes)
+
+                numel = ckpt['model']['backbone.backbone.stage0.rbr_dense.conv.weight'].numel()
+                zeros = numel - ckpt['model']['backbone.backbone.stage0.rbr_dense.conv.weight'].count_nonzero()
+                sparsity_ratio_after = (zeros / numel) * 100.0
+                print(f"Sparsity of backbone.backbone.stage0.rbr_dense.conv.weight = {sparsity_ratio_after:.2f}%")
+                save_checkpoint(
+                    ckpt,
+                    update_best_ckpt,
+                    self.file_name,
+                    f'pruned_epoch{self.epoch:03d}',
+                )
