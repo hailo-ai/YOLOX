@@ -94,6 +94,12 @@ def main():
     # Dry run
     dummy_output = model(dummy_input)
 
+    # Save deployment torch checkpoint:    
+    basename, _ = os.path.basename(args.output_name).split('.')
+    deploy_name = basename + '_deploy.pth'
+    torch.save(model.state_dict(), deploy_name)
+    logger.info("Generated deployment Pytorch checkpoint {}".format(deploy_name))
+
     torch.onnx._export(
         model,
         dummy_input,
