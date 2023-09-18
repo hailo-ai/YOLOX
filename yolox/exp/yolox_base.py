@@ -10,6 +10,7 @@ import torch.distributed as dist
 import torch.nn as nn
 
 from .base_exp import BaseExp
+from yolox.data.datasets import COCO_CLASSES
 
 
 class Exp(BaseExp):
@@ -66,6 +67,7 @@ class Exp(BaseExp):
         self.eval_interval = 10
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
         self.name = 'train2017'
+        self.eval_imgs_rpath = 'val2017'
 
         # -----------------  testing config ------------------ #
         self.test_size = (640, 640)
@@ -242,14 +244,14 @@ class Exp(BaseExp):
         )
         return scheduler
 
-    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
+    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False, val_name="val2017"):
         from yolox.data import COCODataset, ValTransform
-
         valdataset = COCODataset(
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
+            name=val_name if not testdev else "test2017",
             # name="val2017_4cls/images" if not testdev else "test2017",
-            name="images/test2017" if not testdev else "test2017",
+            # name="images/test2017" if not testdev else "test2017",
             # name="images" if not testdev else "test2017",
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
@@ -285,6 +287,7 @@ class Exp(BaseExp):
             nmsthre=self.nmsthre,
             num_classes=self.num_classes,
             testdev=testdev,
+            classes_names=COCO_CLASSES,
         )
         return evaluator
 

@@ -8,6 +8,7 @@ import torch.nn as nn
 from yolox.exp import Exp as MyExp
 from yolox.models.yolox_hailo_fpn import YOLOxHailoFPN
 from yolox.models.effidehead import YoloxHailoHead, build_effidehead_layer
+from yolox.data.datasets import COCO_4CLASSES
 
 
 class Exp(MyExp):
@@ -25,20 +26,19 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         self.act = 'relu'
-        self.output_dir = './yolox_hailo_pas_prune'
+        self.output_dir = './yolox_hailo_4cls_prune_outputs'
         self.print_interval = 200
-        self.eval_interval = 5
-        self.max_epoch = 400
+        self.eval_interval = 2  # 10
+        self.max_epoch = 300
         self.data_num_workers = 8
-        # self.basic_lr_per_img = 0.02 / 64.0
 
         # Data
-        self.num_classes = 6
-        self.data_dir = '/fastdata/users/pas_dataset'
-        self.train_ann = "train.json"
-        self.val_ann = "test.json"
-        self.test_ann = "test.json"
-        self.name = 'images/train2017/'
+        self.num_classes = 4
+        self.data_dir = '/fastdata/coco/coco_4classes/'
+        self.train_ann = "instances_train2017_4cls.json"
+        self.val_ann = "instances_val2017_4cls.json"
+        self.test_ann = "instances_val2017_4cls.json"
+        self.name = 'train2017_4cls/images/'
         self.rgb = True
 
         # Sparsity
@@ -83,3 +83,17 @@ class Exp(MyExp):
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)
         return self.model
+
+    def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
+        from yolox.evaluators import COCOEvaluator
+        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
+        evaluator = COCOEvaluator(
+            dataloader=val_loader,
+            img_size=self.test_size,
+            confthre=self.test_conf,
+            nmsthre=self.nmsthre,
+            num_classes=self.num_classes,
+            testdev=testdev,
+            classes_names=COCO_4CLASSES,
+        )
+        return evaluator

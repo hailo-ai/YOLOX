@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-PAS_6CLASSES = (
+HAILO_6CLASSES = (
     "Car",
     "Cyclist",
     "Pedestrian",

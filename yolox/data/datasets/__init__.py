@@ -5,7 +5,7 @@
 from .coco import COCODataset
 from .coco_classes import COCO_CLASSES
 from .coco_4classes import COCO_4CLASSES
-from .pas_6classes import PAS_6CLASSES
+from .hailo_6classes import HAILO_6CLASSES
 from .datasets_wrapper import ConcatDataset, Dataset, MixConcatDataset
 from .mosaicdetection import MosaicDetection
 from .voc import VOCDetection

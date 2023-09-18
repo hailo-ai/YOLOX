@@ -30,7 +30,7 @@ from yolox.utils import (
     synchronize
 )
 
-from yolov5.utils.neuralmagic import sparsezoo_download, maybe_create_sparsification_manager, SparsificationManager
+from yolov5.utils.neuralmagic import maybe_create_sparsification_manager
 from yolov5.utils.torch_utils import de_parallel                                      
 
 class Trainer:
@@ -58,6 +58,8 @@ class Trainer:
         # metric record
         self.meter = MeterBuffer(window_size=exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
+
+        self.sparsification_manager = None
 
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
@@ -143,14 +145,14 @@ class Trainer:
         # value of epoch will be set in `resume_train`
         model = self.resume_train(model)
 
-        # SPARSEML
-        ckpt = torch.load(self.args.ckpt, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
-        ckpt["epoch"] = -1
-        ckpt["ema"] = ckpt.get("ema", None)
-        self.sparsification_manager = maybe_create_sparsification_manager(model, ckpt=ckpt,
-                                                                     train_recipe=self.args.recipe,
-                                                                     recipe_args=self.args.recipe_args,
-                                                                     device=self.device, resumed=self.args.resume)
+        if self.args.recipe is not None:  # SPARSEML
+            ckpt = torch.load(self.args.ckpt, map_location='cpu')  # load checkpoint to CPU to avoid CUDA memory leak
+            ckpt["epoch"] = self.start_epoch
+            ckpt["ema"] = ckpt.get("ema", None)
+            self.sparsification_manager = maybe_create_sparsification_manager(model, ckpt=ckpt,
+                                                                        train_recipe=self.args.recipe,
+                                                                        recipe_args=self.args.recipe_args,
+                                                                        device=self.device, resumed=self.args.resume)
         # data related init
         self.no_aug = self.start_epoch >= self.max_epoch - self.exp.no_aug_epochs
         self.train_loader = self.exp.get_data_loader(
@@ -186,21 +188,21 @@ class Trainer:
         if self.rank == 0:
             self.tblogger = SummaryWriter(self.file_name)
 
-        start_epoch = 295
-        resume = True
-        self.scaler, scheduler, self.ema_model, epochs = self.sparsification_manager.initialize(
-                    loggers=None,  # None / self.tblogger / logger
-                    scaler=self.scaler,
-                    optimizer=self.optimizer,
-                    scheduler=self.lr_scheduler,
-                    ema=self.ema_model,
-                    start_epoch=start_epoch,
-                    steps_per_epoch=len(self.train_loader),
-                    epochs=self.max_epoch,
-                    compute_loss=None,  # None / some loss function
-                    distillation_teacher=None,
-                    resumed=resume,
-                )
+        if self.args.recipe is not None:  # SPARSEML
+            start_epoch = self.start_epoch  # 295
+            self.scaler, scheduler, self.ema_model, epochs = self.sparsification_manager.initialize(
+                        loggers=None,  # None / self.tblogger / logger
+                        scaler=self.scaler,
+                        optimizer=self.optimizer,
+                        scheduler=self.lr_scheduler,
+                        ema=self.ema_model,
+                        start_epoch=start_epoch,
+                        steps_per_epoch=len(self.train_loader),
+                        epochs=self.max_epoch,
+                        compute_loss=None,  # None / some loss function
+                        distillation_teacher=None,
+                        resumed=True,
+                    )
         logger.info("Training start...")
         logger.info("\n{}".format(model))
 

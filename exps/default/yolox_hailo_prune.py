@@ -8,6 +8,7 @@ import torch.nn as nn
 from yolox.exp import Exp as MyExp
 from yolox.models.yolox_hailo_fpn import YOLOxHailoFPN
 from yolox.models.effidehead import YoloxHailoHead, build_effidehead_layer
+from yolox.data.datasets import HAILO_6CLASSES
 
 
 class Exp(MyExp):
@@ -25,20 +26,20 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         self.act = 'relu'
-        self.output_dir = './yolox_hailo_outputs_4cls_prune'
+        self.output_dir = './yolox_hailo_prune_outputs'
         self.print_interval = 200
-        self.eval_interval = 5
+        self.eval_interval = 5 # 10
         self.max_epoch = 400
-        self.data_num_workers = 8
-        # self.basic_lr_per_img = 0.02 / 64.0
+        self.data_num_workers = 16
+        self.basic_lr_per_img = 0.000001 / 8.0  # with bs=8 will result in constant lr=1e-5
 
         # Data
-        self.num_classes = 4
-        self.data_dir = '/fastdata/coco/coco_4classes/'
-        self.train_ann = "instances_train2017_4cls.json"
-        self.val_ann = "instances_val2017_4cls.json"
-        self.test_ann = "instances_val2017_4cls.json"
-        self.name = 'train2017_4cls/images/'
+        self.num_classes = 6
+        self.data_dir = '/fastdata/users/hailo_dataset'
+        self.train_ann = "test.json"  # "train.json"
+        self.val_ann = "test.json"
+        self.test_ann = "test.json"
+        self.name = 'images/test2017/'  # 'images/train2017/'
         self.rgb = True
 
         # Sparsity
@@ -46,7 +47,6 @@ class Exp(MyExp):
         self.recipe_args = None
         self.test_conf = 0.05
         self.warmup_epochs = 0
-        self.basic_lr_per_img = 0.000001 / 8.0  # with bs=8 will result in constant lr=1e-5
         self.scheduler = "constant"
 
         # Loss
@@ -83,3 +83,17 @@ class Exp(MyExp):
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)
         return self.model
+
+    def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
+        from yolox.evaluators import COCOEvaluator
+        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy, self.eval_imgs_rpath)
+        evaluator = COCOEvaluator(
+            dataloader=val_loader,
+            img_size=self.test_size,
+            confthre=self.test_conf,
+            nmsthre=self.nmsthre,
+            num_classes=self.num_classes,
+            testdev=testdev,
+            classes_names=HAILO_6CLASSES,
+        )
+        return evaluator

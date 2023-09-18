@@ -16,7 +16,7 @@ import numpy as np
 
 import torch
 
-from yolox.data.datasets import COCO_CLASSES, COCO_4CLASSES, PAS_6CLASSES
+from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import (
     gather,
     is_main_process,
@@ -29,7 +29,7 @@ from yolox.utils import (
 KITTI_CLASSES = ["Pedestrian"]
 
 
-def per_class_AR_table(coco_eval, class_names=PAS_6CLASSES, headers=["class", "AR"], colums=6):
+def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
     per_class_AR = {}
     recalls = coco_eval.eval["recall"]
     # dimension of recalls: [TxKxAxM]
@@ -52,7 +52,7 @@ def per_class_AR_table(coco_eval, class_names=PAS_6CLASSES, headers=["class", "A
     return table
 
 
-def per_class_AP_table(coco_eval, class_names=PAS_6CLASSES, headers=["class", "AP"], colums=6):
+def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AP"], colums=6):
     per_class_AP = {}
     precisions = coco_eval.eval["precision"]
     # dimension of precisions: [TxRxKxAxM]
@@ -93,6 +93,7 @@ class COCOEvaluator:
         testdev: bool = False,
         per_class_AP: bool = False,
         per_class_AR: bool = False,
+        classes_names: tuple = (),
     ):
         """
         Args:
@@ -113,6 +114,7 @@ class COCOEvaluator:
         self.testdev = testdev
         self.per_class_AP = per_class_AP
         self.per_class_AR = per_class_AR
+        self.classes_names = classes_names
 
     def evaluate(
         self,
@@ -283,9 +285,9 @@ class COCOEvaluator:
                 cocoEval.summarize()
             info += redirect_string.getvalue()
             if self.per_class_AP:
-                info += "per class AP:\n" + per_class_AP_table(cocoEval) + "\n"
+                info += "per class AP:\n" + per_class_AP_table(cocoEval, class_names=self.classes_names) + "\n"
             if self.per_class_AR:
-                info += "per class AR:\n" + per_class_AR_table(cocoEval) + "\n"
+                info += "per class AR:\n" + per_class_AR_table(cocoEval, class_names=self.classes_names) + "\n"
             return cocoEval.stats[0], cocoEval.stats[1], info
         else:
             return 0, 0, info
