@@ -27,10 +27,10 @@ class Exp(MyExp):
 
         self.act = 'relu'
         self.output_dir = './yolox_hailo_4cls_outputs'
-        self.print_interval = 200
-        self.eval_interval = 5  # 10
+        self.print_interval = 400
+        self.eval_interval = 10
         self.max_epoch = 300
-        self.data_num_workers = 0  #  8. if occupy, need to set to 0?
+        self.data_num_workers = 8  # if occupy, need to set to 0?
         self.basic_lr_per_img = 0.02 / 64.0
 
         # Data
@@ -39,8 +39,8 @@ class Exp(MyExp):
         self.train_ann = "instances_train2017_4cls.json"
         self.val_ann = "instances_val2017_4cls.json"
         self.test_ann = "instances_val2017_4cls.json"
-        self.name = 'images/train2017_4cls/'  # 'train2017_4cls/images/'
-        self.eval_imgs_rpath = 'images/val2017_4cls/'  # 'val2017_4cls/images/' # relative path (from data_dir) of the eval images
+        self.name = 'images/train2017_4cls/'
+        self.eval_imgs_rpath = 'images/val2017_4cls/'  # relative path (from data_dir) of the eval images
         self.rgb = True
 
         # Loss

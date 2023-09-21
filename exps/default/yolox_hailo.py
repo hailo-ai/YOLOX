@@ -27,8 +27,8 @@ class Exp(MyExp):
 
         self.act = 'relu'
         self.output_dir = './yolox_hailo_outputs'
-        self.print_interval = 200
-        self.eval_interval = 5  # 10
+        self.print_interval = 400
+        self.eval_interval = 10
         self.max_epoch = 300
         self.data_num_workers = 16
         self.basic_lr_per_img = 0.02 / 64.0
@@ -37,10 +37,10 @@ class Exp(MyExp):
         # Data
         self.num_classes = 6
         self.data_dir = '/fastdata/users/hailo_dataset'
-        self.train_ann = "train.json"  # "train.json"
+        self.train_ann = "train.json"
         self.val_ann = "test.json"
         self.test_ann = "test.json"
-        self.name = 'images/train2017/'  # 'images/train2017/'  # 
+        self.name = 'images/train2017/' 
         self.eval_imgs_rpath = 'images/test2017' # relative path (from data_dir) of the eval images
         self.rgb = True
 
