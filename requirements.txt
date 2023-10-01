@@ -1,11 +1,7 @@
-# TODO: Update with exact module version
-# numpy==1.21.2
-# torch==1.10.0a0+0aef44c
 opencv_python==4.5.5.64
 loguru==0.6.0
 scikit-image==0.19.3
 tqdm==4.62.3
-# torchvision==0.11.0a0
 Pillow==9.4.0
 thop==0.1.1.post2209072238
 ninja==1.10.2.3
