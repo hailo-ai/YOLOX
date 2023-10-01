@@ -89,6 +89,8 @@ class LRScheduler:
             ]
             gamma = getattr(self, "gamma", 0.1)
             lr_func = partial(multistep_lr, self.lr, milestones, gamma)
+        elif name == "constant": # constant lr schedule
+            lr_func = partial(constant_lr, self.lr)
         else:
             raise ValueError("Scheduler version {} not supported.".format(name))
         return lr_func
@@ -202,4 +204,8 @@ def multistep_lr(lr, milestones, gamma, iters):
     """MultiStep learning rate"""
     for milestone in milestones:
         lr *= gamma if iters >= milestone else 1.0
+    return lr
+
+def constant_lr(lr, iters):
+    "Constant learning rate"
     return lr

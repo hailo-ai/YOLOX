@@ -13,6 +13,7 @@ __all__ = [
     "fuse_model",
     "get_model_info",
     "replace_module",
+    "calc_sparsity",
 ]
 
 
@@ -104,3 +105,16 @@ def replace_module(module, replaced_module_type, new_module_type, replace_func=N
                 model.add_module(name, new_child)
 
     return model
+
+
+def calc_sparsity(model_dict, logger):
+    weights_layers_num, total_weights, total_zeros = 0, 0, 0
+    for k, v in model_dict.items():
+        if k.startswith('backbone.') and k.endswith('weight'):
+            weights_layers_num += 1
+            total_weights += v.numel()
+            total_zeros += (v.numel() - v.count_nonzero())
+            zeros_ratio = (v.numel() - v.count_nonzero()) / v.numel() * 100.0
+            logger.info(f"[{weights_layers_num:>2}] {k:<51}:: {v.numel() - v.count_nonzero():<5} / {v.numel():<7} ({zeros_ratio:<4.1f}%) are zeros")
+    logger.info(f"Model has {weights_layers_num} weight layers")
+    logger.info(f"Overall Sparsity is roughly: {100 * total_zeros / total_weights:.1f}%")

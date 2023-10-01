@@ -26,13 +26,12 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         self.act = 'relu'
-        self.output_dir = './yolox_hailo_outputs'
+        self.output_dir = './yolox_hailo_prune_outputs'
         self.print_interval = 400
         self.eval_interval = 10
-        self.max_epoch = 300
+        self.max_epoch = 400
         self.data_num_workers = 16
-        self.basic_lr_per_img = 0.02 / 64.0
-        self.test_conf = 0.05
+        self.basic_lr_per_img = 0.000001 / 8.0  # with bs=8 will result in constant lr=1e-5
 
         # Data
         self.num_classes = 6
@@ -40,9 +39,16 @@ class Exp(MyExp):
         self.train_ann = "train.json"
         self.val_ann = "test.json"
         self.test_ann = "test.json"
-        self.name = 'images/train2017/' 
+        self.name = 'images/train2017/'
         self.eval_imgs_rpath = 'images/test2017' # relative path (from data_dir) of the eval images
         self.rgb = True
+
+        # Sparsity
+        self.recipe = None
+        self.recipe_args = None
+        self.test_conf = 0.05
+        self.warmup_epochs = 0
+        self.scheduler = "constant"
 
         # Loss
         self.iou_type = 'siou'

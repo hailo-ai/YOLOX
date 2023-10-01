@@ -93,6 +93,7 @@ class COCOEvaluator:
         testdev: bool = False,
         per_class_AP: bool = False,
         per_class_AR: bool = False,
+        classes_names: tuple = (),
     ):
         """
         Args:
@@ -113,6 +114,7 @@ class COCOEvaluator:
         self.testdev = testdev
         self.per_class_AP = per_class_AP
         self.per_class_AR = per_class_AR
+        self.classes_names = classes_names
 
     def evaluate(
         self,
@@ -234,7 +236,7 @@ class COCOEvaluator:
         if not is_main_process():
             return 0, 0, None
 
-        logger.info("Evaluate in main process...")
+        logger.info(f"Evaluate in main process... {len(data_dict)} predictions")
 
         annType = ["segm", "bbox", "keypoints"]
 
@@ -283,9 +285,9 @@ class COCOEvaluator:
                 cocoEval.summarize()
             info += redirect_string.getvalue()
             if self.per_class_AP:
-                info += "per class AP:\n" + per_class_AP_table(cocoEval) + "\n"
+                info += "per class AP:\n" + per_class_AP_table(cocoEval, class_names=self.classes_names) + "\n"
             if self.per_class_AR:
-                info += "per class AR:\n" + per_class_AR_table(cocoEval) + "\n"
+                info += "per class AR:\n" + per_class_AR_table(cocoEval, class_names=self.classes_names) + "\n"
             return cocoEval.stats[0], cocoEval.stats[1], info
         else:
             return 0, 0, info

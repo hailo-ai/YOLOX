@@ -53,6 +53,12 @@ class StreamToLoguru:
     def flush(self):
         pass
 
+    def isatty(self):
+        return True
+
+    def fileno(self):
+        return True
+
 
 def redirect_sys_output(log_level="INFO"):
     redirect_logger = StreamToLoguru(log_level)
