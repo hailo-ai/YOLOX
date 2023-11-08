@@ -11,7 +11,7 @@ from torch import nn
 
 from yolox.exp import get_exp
 from yolox.models.network_blocks import SiLU
-from yolox.utils import replace_module
+from yolox.utils import replace_module, calc_sparsity
 
 
 def make_parser():
@@ -54,7 +54,11 @@ def make_parser():
         action="store_true",
         help="decode in inference or not"
     )
-
+    parser.add_argument(
+        "--calc-sparsity",
+        action="store_true",
+        help="Calculate sparsity ratio of model"
+    )
     return parser
 
 
@@ -87,9 +91,10 @@ def main():
         if hasattr(module, 'switch_to_deploy'):
             module.switch_to_deploy()
     model.head.decode_in_inference = args.decode_in_inference
-
-
     logger.info("loading checkpoint done.")
+
+    if args.calc_sparsity:
+        _ = calc_sparsity(model.state_dict(), logger)
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
     # Dry run
     dummy_output = model(dummy_input)

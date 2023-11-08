@@ -115,6 +115,8 @@ def calc_sparsity(model_dict, logger):
             total_weights += v.numel()
             total_zeros += (v.numel() - v.count_nonzero())
             zeros_ratio = (v.numel() - v.count_nonzero()) / v.numel() * 100.0
-            logger.info(f"[{weights_layers_num:>2}] {k:<51}:: {v.numel() - v.count_nonzero():<5} / {v.numel():<7} ({zeros_ratio:<4.1f}%) are zeros")
-    logger.info(f"Model has {weights_layers_num} weight layers")
-    logger.info(f"Overall Sparsity is roughly: {100 * total_zeros / total_weights:.1f}%")
+            # logger.info(f"[{weights_layers_num:>2}] {k:<51}:: {v.numel() - v.count_nonzero():<5} / {v.numel():<7} ({zeros_ratio:<4.1f}%) are zeros")
+    # logger.info(f"Model has {weights_layers_num} weight layers")
+    overall_sparsity = 100 * total_zeros / total_weights
+    logger.info(f"Overall Sparsity is roughly: {overall_sparsity:.1f}%")
+    return overall_sparsity

@@ -27,11 +27,12 @@ from yolox.utils import (
     occupy_mem,
     save_checkpoint,
     setup_logger,
-    synchronize
+    synchronize,
+    calc_sparsity
 )
 
 from yolov5.utils.neuralmagic import maybe_create_sparsification_manager
-from yolov5.utils.torch_utils import de_parallel                                      
+from yolov5.utils.torch_utils import de_parallel
 
 class Trainer:
     def __init__(self, exp, args):
@@ -178,6 +179,8 @@ class Trainer:
         if self.use_model_ema:
             self.ema_model = ModelEMA(model, 0.9998)
             self.ema_model.updates = self.max_iter * self.start_epoch
+        else:
+            self.ema_model = None
 
         self.model = model
         self.model.train()
@@ -334,6 +337,8 @@ class Trainer:
             evalmodel = self.model
             if is_parallel(evalmodel):
                 evalmodel = evalmodel.module
+        logger.info(f"Evaluating model on epoch {self.epoch + 1}")
+        sparsity_rate = calc_sparsity(evalmodel.state_dict(), logger)
 
         ap50_95, ap50, summary = self.exp.eval(
             evalmodel, self.evaluator, self.is_distributed
@@ -345,9 +350,13 @@ class Trainer:
             [self.tblogger.add_scalar("loss/" + k, v, self.epoch + 1)
              for k, v in self.meter_tfboard.items() if "loss" in k]
             self.tblogger.add_scalar("lr", self.meter_tfboard["lr"], self.epoch + 1)
+            self.tblogger.add_scalar("sparsity", sparsity_rate, self.epoch + 1)
             logger.info("\n" + summary)
         synchronize()
 
+        if self.sparsification_manager and (self.sparsification_manager.last_pruning_epoch == (self.epoch + 1)):
+            logger.info(f"Reached last pruning epoch. Resetting best_ap to {ap50_95:.4f}")
+            self.best_ap = ap50_95  # Reset best_ap at last_pruning_epoch
         self.save_ckpt("last_epoch", ap50_95 > self.best_ap)
         self.best_ap = max(self.best_ap, ap50_95)
 
@@ -367,14 +376,16 @@ class Trainer:
                 ckpt_name,
             )
 
-            if self.sparsification_manager:
+            if self.sparsification_manager and (self.sparsification_manager.last_pruning_epoch <= (self.epoch + 1)):  # and update_best_ckpt:
                 final_epoch = self.epoch + 1 == self.max_epoch
                 print(f"[Epoch #{self.epoch}] Saving sparse checkpoint !! {final_epoch=}")
+                ema_sparse = deepcopy(self.ema_model.ema).half() if self.use_model_ema else None
+                ema_updates = self.ema_model.updates if self.use_model_ema else 0
                 ckpt = {
                     'epoch': self.epoch,
                     'model': deepcopy(de_parallel(self.model)).half(),
-                    'ema': deepcopy(self.ema_model.ema).half(),
-                    'updates': self.ema_model.updates,
+                    'ema': ema_sparse,
+                    'updates': ema_updates,
                     'optimizer': self.optimizer.state_dict(),
                     'date': datetime.datetime.now().isoformat()}
                 ckpt = self.sparsification_manager.update_state_dict_for_saving(ckpt, final_epoch, self.use_model_ema, self.exp.num_classes)
@@ -389,3 +400,11 @@ class Trainer:
                     self.file_name,
                     f'pruned_epoch{self.epoch:03d}',
                 )
+                if update_best_ckpt:
+                    logger.info(f"Saved {sparsity_ratio_after:.2f}% best pruned weights to {self.file_name}, with {self.best_ap*100:.2f} mAP, on epoch {self.epoch + 1}")
+                    save_checkpoint(
+                    ckpt,
+                    update_best_ckpt,
+                    self.file_name,
+                    f'pruned_epoch{self.epoch:03d}_best',
+                    )

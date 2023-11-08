@@ -22,16 +22,17 @@ class Exp(MyExp):
         self.mosaic_scale = (0.5, 1.5)
         self.mosaic_prob = 0.5
         self.enable_mixup = False
+        self.ema = False
 
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         self.act = 'relu'
         self.output_dir = './yolox_hailo_prune_outputs'
         self.print_interval = 400
-        self.eval_interval = 10
+        self.eval_interval = 5
         self.max_epoch = 400
-        self.data_num_workers = 16
-        self.basic_lr_per_img = 0.000001 / 8.0  # with bs=8 will result in constant lr=1e-5
+        self.data_num_workers = 8
+        self.basic_lr_per_img = 0.00001 / 8.0  # with bs=8 will result in constant lr=1e-5
 
         # Data
         self.num_classes = 6

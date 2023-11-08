@@ -189,7 +189,6 @@ def main(exp, args, num_gpu):
         trt_file = None
         decoder = None
 
-    calc_sparsity(model.state_dict(), logger)
     if args.deploy:
         logger.info("Switching to deployment model")
         for module in model.modules():
