@@ -14,6 +14,9 @@ __all__ = [
     "get_model_info",
     "replace_module",
     "calc_sparsity",
+    "dummy_prune_ckpt",
+    "random_prune_layer",
+    "dummy_prune_layer",
 ]
 
 
@@ -120,3 +123,57 @@ def calc_sparsity(model_dict, logger):
     overall_sparsity = 100 * total_zeros / total_weights
     logger.info(f"Overall Sparsity is roughly: {overall_sparsity:.1f}%")
     return overall_sparsity
+
+
+def dummy_prune_ckpt(ckpt, logger, prune_ratio=0.5, random_prune=False):
+    for k, v in ckpt.items():
+        if k.startswith('backbone.') and k.endswith('.rbr_dense.conv.weight'):
+            if random_prune:  # Sparsify layer randomly:
+                v = random_prune_layer(v, prune_ratio)
+            else:  # Sparsify layer according to magnitude:
+                v = dummy_prune_layer(v, prune_ratio)
+    calc_sparsity(ckpt, logger)
+    return ckpt
+
+
+def random_prune_layer(layer, prune_ratio=0.5):
+    """
+    Randomly prune (set to zero) a fraction of elements in a PyTorch tensor.
+
+    Args:
+        layer (torch.Tensor): Input tensor of shape [B, C, H, W].
+        prune_ratio (float): Fraction of elements to set to zero.
+
+    Returns:
+        torch.Tensor: Pruned tensor with the same shape as the input.
+    """
+    # Determine the number of elements to prune
+    num_elements = layer.numel()
+    num_prune = int(prune_ratio * num_elements)
+
+    # Create a mask with zeros and ones to select the elements to prune
+    mask = torch.ones(num_elements)
+    mask[:num_prune] = 0
+    mask = mask[torch.randperm(num_elements)]  # Shuffle the mask randomly
+    mask = mask.view(layer.shape)
+
+    # Apply the mask to the input tensor to prune it
+    layer *= mask
+    return layer
+
+
+def dummy_prune_layer(layer, prune_ratio=0.5):
+    # Flatten the tensor
+    flattened_layer = layer.flatten()
+    # Get the absolute values
+    abs_values = torch.abs(flattened_layer)
+    # Get indices sorted by absolute values
+    sorted_indices = torch.argsort(abs_values)
+    # Determine the threshold index
+    threshold_index = int(prune_ratio * len(sorted_indices))
+    # Set values below the threshold to zero
+    flattened_layer[sorted_indices[:threshold_index]] = 0
+    # Reshape the tensor back to its original shape
+    pruned_tensor = flattened_layer.reshape(layer.shape)
+
+    return pruned_tensor
