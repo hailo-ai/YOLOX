@@ -31,8 +31,11 @@ from yolox.utils import (
     calc_sparsity
 )
 
-from yolov5.utils.neuralmagic import maybe_create_sparsification_manager
-from yolov5.utils.torch_utils import de_parallel
+# from yolov5.utils.neuralmagic import maybe_create_sparsification_manager
+# from yolov5.utils.torch_utils import de_parallel
+
+from yolox.utils.neuralmagic import maybe_create_sparsification_manager
+from yolox.utils.torch_utils import de_parallel
 
 class Trainer:
     def __init__(self, exp, args):
