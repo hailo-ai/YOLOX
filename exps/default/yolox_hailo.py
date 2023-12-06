@@ -30,7 +30,7 @@ class Exp(MyExp):
         self.print_interval = 400
         self.eval_interval = 10
         self.max_epoch = 300
-        self.data_num_workers = 16
+        self.data_num_workers = 8
         self.basic_lr_per_img = 0.02 / 64.0
         self.test_conf = 0.05
 

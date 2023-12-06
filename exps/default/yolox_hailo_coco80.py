@@ -16,8 +16,8 @@ class Exp(MyExp):
         super(Exp, self).__init__()
         self.depth = 0.33
         self.width = 0.25
-        self.input_size = (640, 640)  # (height, width)
-        self.test_size = (640, 640)  # (height, width)
+        self.input_size = (480, 640)  # (height, width)
+        self.test_size = (480, 640)  # (height, width)
         self.random_size = (10, 20)
         self.mosaic_scale = (0.5, 1.5)
         self.mosaic_prob = 0.5
@@ -30,9 +30,8 @@ class Exp(MyExp):
         self.print_interval = 400
         self.eval_interval = 5
         self.max_epoch = 300
-        self.data_num_workers = 8
+        self.data_num_workers = 6
         self.basic_lr_per_img = 0.02 / 64.0
-        self.test_conf = 0.05
 
         # Data
 #        self.num_classes = 6
@@ -42,7 +41,6 @@ class Exp(MyExp):
         self.test_ann = "instances_val2017.json"
         self.name = 'images/train2017' 
         self.eval_imgs_rpath = 'images/val2017' # relative path (from data_dir) of the eval images
-        self.rgb = True
 
         # Loss
         self.iou_type = 'siou'
