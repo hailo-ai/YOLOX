@@ -9,13 +9,8 @@ from yolox.utils.loggers import colorstr
 
 __all__ = [
     "ALMOST_ONE",
-    # "QAT_BATCH_SCALE",
-    # "sparsezoo_download",
     "ToggleableModelEMA",
     "load_ema",
-    # "load_sparsified_model",
-    # "neuralmagic_onnx_export",
-    # "export_sample_inputs_outputs",
 ]
 
 SAVE_ROOT = Path.cwd()
@@ -51,9 +46,6 @@ def load_ema(
 
 def set_logging(name=None, verbose=True):
     # Sets level and returns logger
-    # if is_kaggle() or is_colab():
-    #     for h in logging.root.handlers:
-    #         logging.root.removeHandler(h)  # remove all handlers associated with the root logger object
     rank = int(os.getenv('RANK', -1))  # rank in world for Multi-GPU trainings
     level = logging.INFO if verbose and rank in {-1, 0} else logging.ERROR
     log = logging.getLogger(name)
