@@ -379,9 +379,8 @@ class Trainer:
                 ckpt_name,
             )
 
-            if self.sparsification_manager and (self.sparsification_manager.last_pruning_epoch <= (self.epoch + 1)):  # and update_best_ckpt:
+            if self.sparsification_manager and (self.sparsification_manager.last_pruning_epoch <= (self.epoch + 1)):
                 final_epoch = self.epoch + 1 == self.max_epoch
-                print(f"[Epoch #{self.epoch}] Saving sparse checkpoint !! {final_epoch=}")
                 ema_sparse = deepcopy(self.ema_model.ema).half() if self.use_model_ema else None
                 ema_updates = self.ema_model.updates if self.use_model_ema else 0
                 ckpt = {
@@ -395,19 +394,13 @@ class Trainer:
 
                 numel = ckpt['model']['backbone.backbone.stage0.rbr_dense.conv.weight'].numel()
                 zeros = numel - ckpt['model']['backbone.backbone.stage0.rbr_dense.conv.weight'].count_nonzero()
-                sparsity_ratio_after = (zeros / numel) * 100.0
-                print(f"Sparsity of backbone.backbone.stage0.rbr_dense.conv.weight = {sparsity_ratio_after:.2f}%")
-                save_checkpoint(
-                    ckpt,
-                    update_best_ckpt,
-                    self.file_name,
-                    f'pruned_epoch{self.epoch:03d}',
-                )
+                sparsity_ratio = (zeros / numel) * 100.0
+                logger.info(f"Sparsity ratio of first layer = {sparsity_ratio:.2f}%")
                 if update_best_ckpt:
-                    logger.info(f"Saved {sparsity_ratio_after:.2f}% best pruned weights to {self.file_name}, with {self.best_ap*100:.2f} mAP, on epoch {self.epoch + 1}")
+                    logger.info(f"Saved {sparsity_ratio:.2f}% best pruned weights to {self.file_name}, with {self.best_ap*100:.2f} mAP, on epoch {self.epoch + 1}")
                     save_checkpoint(
                     ckpt,
                     update_best_ckpt,
                     self.file_name,
-                    f'pruned_epoch{self.epoch:03d}_best',
+                    f'pruned_epoch{self.epoch + 1:03d}_best',
                     )
