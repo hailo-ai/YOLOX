@@ -8,7 +8,7 @@ import torch.nn as nn
 from yolox.exp import Exp as MyExp
 from yolox.models.yolox_hailo_fpn import YOLOxHailoFPN
 from yolox.models.effidehead import YoloxHailoHead, build_effidehead_layer
-from yolox.data.datasets import HAILO_6CLASSES
+from yolox.data.datasets import COCO_CLASSES
 
 
 class Exp(MyExp):
@@ -16,40 +16,31 @@ class Exp(MyExp):
         super(Exp, self).__init__()
         self.depth = 0.33
         self.width = 0.25
-        self.input_size = (736, 960)  # (height, width)
-        self.test_size = (736, 960)  # (height, width)
+        self.input_size = (480, 640)  # (height, width)
+        self.test_size = (480, 640)  # (height, width)
         self.random_size = (10, 20)
         self.mosaic_scale = (0.5, 1.5)
         self.mosaic_prob = 0.5
         self.enable_mixup = False
-        self.ema = False
 
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         self.act = 'relu'
-        self.output_dir = './yolox_hailo_prune_outputs'
+        self.output_dir = './hailo_sparseml_v1_coco80'
         self.print_interval = 400
         self.eval_interval = 5
-        self.max_epoch = 400
-        self.data_num_workers = 8
-        self.basic_lr_per_img = 0.00001 / 8.0  # with bs=8 will result in constant lr=1e-5
+        self.max_epoch = 300
+        self.data_num_workers = 6
+        self.basic_lr_per_img = 0.02 / 64.0
 
         # Data
-        self.num_classes = 6
-        self.data_dir = '/fastdata/users/hailo_dataset'
-        self.train_ann = "train.json"
-        self.val_ann = "test.json"
-        self.test_ann = "test.json"
-        self.name = 'images/train2017/'
-        self.eval_imgs_rpath = 'images/test2017' # relative path (from data_dir) of the eval images
-        self.rgb = True
-
-        # Sparsity
-        self.recipe = None
-        self.recipe_args = None
-        self.test_conf = 0.05
-        self.warmup_epochs = 0
-        self.scheduler = "constant"
+#        self.num_classes = 6
+        self.data_dir = '/fastdata/coco'
+        self.train_ann = "instances_train2017.json"
+        self.val_ann = "instances_val2017.json"
+        self.test_ann = "instances_val2017.json"
+        self.name = 'images/train2017' 
+        self.eval_imgs_rpath = 'images/val2017' # relative path (from data_dir) of the eval images
 
         # Loss
         self.iou_type = 'siou'
@@ -96,6 +87,6 @@ class Exp(MyExp):
             nmsthre=self.nmsthre,
             num_classes=self.num_classes,
             testdev=testdev,
-            classes_names=HAILO_6CLASSES,
+            classes_names=COCO_CLASSES,
         )
         return evaluator
