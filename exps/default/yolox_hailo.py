@@ -8,7 +8,7 @@ import torch.nn as nn
 from yolox.exp import Exp as MyExp
 from yolox.models.yolox_hailo_fpn import YOLOxHailoFPN
 from yolox.models.effidehead import YoloxHailoHead, build_effidehead_layer
-from yolox.data.datasets import HAILO_6CLASSES
+from yolox.data.datasets import PAS_4CLASSES  # HAILO_6CLASSES
 
 
 class Exp(MyExp):
@@ -35,13 +35,13 @@ class Exp(MyExp):
         self.test_conf = 0.05
 
         # Data
-        self.num_classes = 6
-        self.data_dir = '/fastdata/users/hailo_dataset'
-        self.train_ann = "train.json"
-        self.val_ann = "test.json"
-        self.test_ann = "test.json"
-        self.name = 'images/train2017/' 
-        self.eval_imgs_rpath = 'images/test2017' # relative path (from data_dir) of the eval images
+        self.num_classes = 4
+        self.data_dir = '/fastdata/datasets/pas_dataset20k'
+        self.train_ann = "train_4c_v5p8b1_sample20k.json"
+        self.val_ann = "test_4c.json"
+        self.test_ann = "test_4c.json"
+        self.name = 'images_coco/train2017/'
+        self.eval_imgs_rpath = 'images_coco/test2017'  # relative path (from data_dir) of the eval images
         self.rgb = True
 
         # Loss
@@ -89,6 +89,6 @@ class Exp(MyExp):
             nmsthre=self.nmsthre,
             num_classes=self.num_classes,
             testdev=testdev,
-            classes_names=HAILO_6CLASSES,
+            classes_names=PAS_4CLASSES,
         )
         return evaluator
