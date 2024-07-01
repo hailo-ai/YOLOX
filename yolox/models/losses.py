@@ -167,6 +167,7 @@ class CalculateLoss:
                  input_size=(640, 640),  # (height, width)
                  warmup_epoch=4,
                  iou_type='siou',
+                 per_class_weight=False,
                  loss_weight={
                      'class': 1.0,
                      'iou': 2.5,
@@ -184,7 +185,7 @@ class CalculateLoss:
             topk=13, num_classes=self.num_classes, alpha=1.0, beta=6.0)
 
         self.iou_type = iou_type
-        self.varifocal_loss = VarifocalLoss().cuda()
+        self.varifocal_loss = VarifocalLoss(n_classes=num_classes, per_class_weight=per_class_weight).cuda()
         self.bbox_loss = BboxLoss(self.num_classes, self.iou_type).cuda()
         self.loss_weight = loss_weight
 
@@ -292,7 +293,7 @@ class CalculateLoss:
 
         # Rescale bbox
         target_bboxes /= stride_tensor
-
+        # import ipdb; ipdb.set_trace()
         # cls loss
         target_labels = torch.where(fg_mask > 0, target_labels,
                                     torch.full_like(target_labels, self.num_classes))
@@ -349,16 +350,28 @@ class CalculateLoss:
 
 
 class VarifocalLoss(nn.Module):
-    def __init__(self, alpha=0.75, gamma=2.0):
+    def __init__(self, alpha=0.75, gamma=2.0, n_classes=80, per_class_weight=False):
         super(VarifocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
+        self.n_classes = n_classes
+        # import ipdb; ipdb.set_trace()
+        self.per_class_weight = torch.ones((n_classes), requires_grad=False, dtype=torch.float16) if not per_class_weight \
+            else torch.tensor(per_class_weight, requires_grad=False, dtype=torch.float16)
 
     def forward(self, pred_score, gt_score, label):
+        # import ipdb; ipdb.set_trace()
         weight = self.alpha * pred_score.pow(self.gamma) * (1 - label) + gt_score * label
+        weight *= self.per_class_weight.to(weight.device)  # Apply weights per class
+        # print(f"gt_score: {gt_score[0,0,:].detach().cpu().numpy()}")
+        # print(f"pred_score: {pred_score[0,0,:].detach().cpu().numpy()}")
+        # print(f"pred_score: {self.per_class_weight.detach().cpu().numpy()}")
+        # import ipdb; ipdb.set_trace()
         with torch.cuda.amp.autocast(enabled=False):
-            loss = (F.binary_cross_entropy(pred_score.float(),
-                    gt_score.float(), reduction='none') * weight).sum()
+            loss_no_weights = F.binary_cross_entropy(pred_score.float(), gt_score.float(), reduction='none')
+            # import ipdb; ipdb.set_trace()
+            loss = (loss_no_weights * weight).sum()
+        # print("=================================")
         return loss
 
 
