@@ -293,7 +293,6 @@ class CalculateLoss:
 
         # Rescale bbox
         target_bboxes /= stride_tensor
-        # import ipdb; ipdb.set_trace()
         # cls loss
         target_labels = torch.where(fg_mask > 0, target_labels,
                                     torch.full_like(target_labels, self.num_classes))
@@ -301,7 +300,6 @@ class CalculateLoss:
         loss_cls = self.varifocal_loss(pred_scores, target_scores, one_hot_label)
 
         target_scores_sum = target_scores.sum()
-        # print(f"target_scores shape = {target_scores.cpu().detach().numpy().shape}, target_scores_sum = {target_scores_sum.cpu().detach().numpy():.2f}")
         # avoid devide zero error, devide by zero will cause loss to be inf or nan.
         # if target_scores_sum is 0, loss_cls equals to 0 alson
         if target_scores_sum > 0:
@@ -355,23 +353,15 @@ class VarifocalLoss(nn.Module):
         self.alpha = alpha
         self.gamma = gamma
         self.n_classes = n_classes
-        # import ipdb; ipdb.set_trace()
         self.per_class_weight = torch.ones((n_classes), requires_grad=False, dtype=torch.float16) if not per_class_weight \
             else torch.tensor(per_class_weight, requires_grad=False, dtype=torch.float16)
 
     def forward(self, pred_score, gt_score, label):
-        # import ipdb; ipdb.set_trace()
         weight = self.alpha * pred_score.pow(self.gamma) * (1 - label) + gt_score * label
         weight *= self.per_class_weight.to(weight.device)  # Apply weights per class
-        # print(f"gt_score: {gt_score[0,0,:].detach().cpu().numpy()}")
-        # print(f"pred_score: {pred_score[0,0,:].detach().cpu().numpy()}")
-        # print(f"pred_score: {self.per_class_weight.detach().cpu().numpy()}")
-        # import ipdb; ipdb.set_trace()
         with torch.cuda.amp.autocast(enabled=False):
             loss_no_weights = F.binary_cross_entropy(pred_score.float(), gt_score.float(), reduction='none')
-            # import ipdb; ipdb.set_trace()
             loss = (loss_no_weights * weight).sum()
-        # print("=================================")
         return loss
 
 
