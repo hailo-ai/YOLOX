@@ -8,7 +8,7 @@ import torch.nn as nn
 from yolox.exp import Exp as MyExp
 from yolox.models.yolox_hailo_fpn import YOLOxHailoFPN
 from yolox.models.effidehead import YoloxHailoHead, build_effidehead_layer
-from yolox.data.datasets import PAS_4CLASSES  # HAILO_6CLASSES
+from yolox.data.datasets import PAS_4CLASSES
 
 
 class Exp(MyExp):
@@ -22,17 +22,17 @@ class Exp(MyExp):
         self.mosaic_scale = (0.5, 1.5)
         self.mosaic_prob = 0.5
         self.enable_mixup = False
-        self.ema = False
 
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         self.act = 'relu'
-        self.output_dir = './yolox_hailo_prune_outputs'
+        self.output_dir = './yolox_hailo_outputs'
         self.print_interval = 400
-        self.eval_interval = 5
-        self.max_epoch = 400
+        self.eval_interval = 10
+        self.max_epoch = 300
         self.data_num_workers = 4
-        self.basic_lr_per_img = 0.00001 / 8.0  # with bs=8 will result in constant lr=1e-5
+        self.basic_lr_per_img = 0.02 / 64.0
+        self.test_conf = 0.05
 
         # Data
         self.num_classes = 4
@@ -44,15 +44,9 @@ class Exp(MyExp):
         self.eval_imgs_rpath = 'images_coco/test2017'  # relative path (from data_dir) of the eval images
         self.rgb = True
 
-        # Sparsity
-        self.recipe = None
-        self.recipe_args = None
-        self.test_conf = 0.05
-        self.warmup_epochs = 0
-        self.scheduler = "constant"
-
         # Loss
         self.iou_type = 'siou'
+        self.per_class_weight = [1.0, 1.0, 2.0, 1.0]
         # backbone config
         self.bb_channels_list = [128, 256, 512, 1024]  # bb_channels * width = [32, 64, 128, 256]
         self.bb_num_repeats_list = [9, 15, 21, 12]  # bb_num_repeats * depth = [3, 5, 7, 4]
@@ -78,8 +72,12 @@ class Exp(MyExp):
             assert len(self.head_channels_list) == 3, "Number of head branches should be 3"
             head_channels_list = [int(round(ch * self.width)) for ch in self.head_channels_list]
             head_layers = build_effidehead_layer(head_channels_list, self.num_classes)
-            head = YoloxHailoHead(self.num_classes, len(head_channels_list),
-                                  head_layers=head_layers, input_size=self.input_size, iou_type=self.iou_type)
+            head = YoloxHailoHead(self.num_classes,
+                                  len(head_channels_list),
+                                  head_layers=head_layers,
+                                  input_size=self.input_size,
+                                  iou_type=self.iou_type,
+                                  per_class_weight=self.per_class_weight)
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)

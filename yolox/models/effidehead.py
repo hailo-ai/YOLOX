@@ -26,7 +26,8 @@ class YoloxHailoHead(nn.Module):
                  num_layers=3,
                  head_layers=None,
                  input_size=(640, 640),  # (height, width)
-                 iou_type='siou'
+                 iou_type='siou',
+                 per_class_weight=False,
                  ):
 
         super().__init__()
@@ -42,7 +43,8 @@ class YoloxHailoHead(nn.Module):
         self.grid_cell_size = 5.0
         self.compute_loss = CalculateLoss(num_classes=num_classes,
                                         input_size=input_size,
-                                        iou_type=iou_type)
+                                        iou_type=iou_type,
+                                        per_class_weight=per_class_weight)
 
         # Init decouple head
         self.stems = nn.ModuleList()
