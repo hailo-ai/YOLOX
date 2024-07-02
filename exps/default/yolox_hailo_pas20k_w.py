@@ -35,7 +35,7 @@ class Exp(MyExp):
         self.test_conf = 0.05
 
         # Data
-        self.num_classes = 6
+        self.num_classes = 4
         self.data_dir = '/fastdata/datasets/pas_dataset20k'
         self.train_ann = "train_4c_v5p8b1_sample20k.json"
         self.val_ann = "test_4c.json"
@@ -46,7 +46,7 @@ class Exp(MyExp):
 
         # Loss
         self.iou_type = 'siou'
-        self.per_class_weight = [1.0, 1.0, 2.0, 1.0, 1.0, 1.0]
+        self.per_class_weight = [1.0, 1.0, 2.0, 1.0]
         # backbone config
         self.bb_channels_list = [128, 256, 512, 1024]  # bb_channels * width = [32, 64, 128, 256]
         self.bb_num_repeats_list = [9, 15, 21, 12]  # bb_num_repeats * depth = [3, 5, 7, 4]
