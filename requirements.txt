@@ -1,6 +1,6 @@
 # TODO: Update with exact module version
 numpy==1.21.2
-torch==1.10.0a0+0aef44c
+torch==1.11.0
 opencv_python==4.5.5.64
 loguru==0.6.0
 scikit-image==0.19.3
