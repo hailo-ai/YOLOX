@@ -245,6 +245,8 @@ class Trainer:
                 )
                 + (", size: {:d}, {}".format(self.input_size[0], eta_str))
             )
+            self.meter_tfboard = {k: v.latest for k, v in loss_meter.items()}
+            self.meter_tfboard["lr"] = self.meter["lr"].latest
             self.meter.clear_meters()
 
         # random resizing
@@ -306,6 +308,9 @@ class Trainer:
         if self.rank == 0:
             self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
             self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
+            [self.tblogger.add_scalar("loss/" + k, v, self.epoch + 1)
+             for k, v in self.meter_tfboard.items() if "loss" in k]
+            self.tblogger.add_scalar("lr", self.meter_tfboard["lr"], self.epoch + 1)
             logger.info("\n" + summary)
         synchronize()
 
